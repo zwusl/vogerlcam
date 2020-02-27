@@ -116,7 +116,7 @@ USAGE
         config = configparser.ConfigParser()
         config.read(configfile)
 
-        local_config = config['LOCAL']
+        local_config = config['DEFAULT']
         picture = local_config.get('picture', 'archive.jpeg')
         picture_annotated = local_config.get('picture_annotated',
                                              'archive_crop.jpeg')
