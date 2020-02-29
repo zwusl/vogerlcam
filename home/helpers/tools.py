@@ -12,9 +12,9 @@ import shutil
 import socket
 import urllib.request
 import logging
+from http.client import RemoteDisconnected
 
 from PIL import Image, ImageDraw, ImageFont  # @UnresolvedImport
-from http.client import RemoteDisconnected
 
 logger = logging.getLogger('webcam.tools')
 
@@ -60,17 +60,19 @@ def get_image_from_webcam(config, picture):
     logger.info("get url %s", url)
     for trycount in range(1, config.getint('maxretrycount') + 1):
         logger.info("get image try %s", trycount)
+
         try:
             with urllib.request.urlopen(url, None, 10) as response:
                 with open(picture, 'wb') as out_file:
                     shutil.copyfileobj(response, out_file)
             got_image = 1
+        except RemoteDisconnected as http_error:   # RemoteDisconnected as discerr:
+            logger.error("HTTPError %s", http_error)
+            got_image = 0
         except urllib.error.URLError as url_error:
             logger.error("URLError %s", url_error)
             got_image = 0
-        except RemoteDisconnected as discerr:
-            logger.error("RemoteDisconnected %s", discerr)
-            got_image = 0
+
         if got_image == 1:
             logger.info("got image at try %s", trycount)
             break
@@ -85,7 +87,7 @@ def annotate_picture(picture, picture_annotated, do_crop=False):
         logger.info("do_crop")
         left=250
         upper=400
-        right=left+1140
+        right=left++1140
         lower=1000
         im_crop = image_from_picture.crop((left, upper, right, lower))
         draw = ImageDraw.Draw(im_crop)
