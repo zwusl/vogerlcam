@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 # encoding: utf-8
 '''
-webcamloop -- get image from cam and ftp it
+webcamloop -- get image from cam and ftp it, loop
 
 seeconfiguration file
 
