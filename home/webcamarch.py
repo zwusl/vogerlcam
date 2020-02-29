@@ -30,7 +30,7 @@ from helpers import tools
 # create logger
 logger = logging.getLogger('webcam')
 logger.setLevel(logging.DEBUG)
-# create file handler which logs even debug messages
+# create file handler which logs even debug messages #
 # fh = logging.FileHandler('spam.log')
 # fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
