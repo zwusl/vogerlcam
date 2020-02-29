@@ -3,7 +3,7 @@
 '''
 webcamloop -- get image from cam and ftp it, loop
 
-seeconfiguration file
+see configuration file
 
 @author:     werner.fuerst@gmx.at
 
@@ -142,25 +142,27 @@ USAGE
         while True:
 
             logger.info("get image from cam")
-    
+
             if tools.get_image_from_webcam(config['WEBCAM'],
                                            picture) == 0:
                 logger.critical("giving up, did not get an image from cam")
                 time.sleep(4)
                 continue
-    
-            logger.info("crop an annotate image %s %s", picture, picture_annotated)
+
+            logger.info("crop an annotate image %s %s",
+                        picture, picture_annotated)
 
             tools.annotate_picture(picture, picture_annotated, True)
-    
+
             logger.info("send image to Webpage")
-    
+
             filename = 'webcam_0' + '.jpeg'
-    
+
             session_is_open = 0
-    
+
             (session_is_open, session) = tools.send_imge_to_webpage(
-                config['FTP'], ftp_config.get('dirloop'), filename, picture_annotated)
+                config['FTP'], ftp_config.get('dirloop'),
+                filename, picture_annotated)
 
             if session_is_open == 1:
                 session.quit()

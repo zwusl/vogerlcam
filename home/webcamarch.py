@@ -163,7 +163,8 @@ USAGE
         session_is_open = 0
 
         (session_is_open, session) = tools.send_imge_to_webpage(
-            config['FTP'], ftp_config.get('dirarch'), filename, picture_annotated)
+            config['FTP'], ftp_config.get('dirarch'),
+            filename, picture_annotated)
 
         if session_is_open == 1:
             files = [fil for fil in listdir(retrydir)

@@ -12,7 +12,7 @@ import shutil
 import socket
 import urllib.request
 import logging
-from http.client import RemoteDisconnected
+from http.client import RemoteDisconnected  # @UnresolvedImport
 
 from PIL import Image, ImageDraw, ImageFont  # @UnresolvedImport
 
@@ -25,22 +25,22 @@ def test1():
 
 
 def getlastvisit():
+    """get timestamp of last visit - returns wait 10/60"""
     logger.info("get last visit")
     try:
         html = urllib.request.urlopen("http://xn--fr-xka.st/webcam/cam1/visited/lb.txt",None,10)
         visited = html.read()
         visited_parsed = datetime.strptime(visited.decode('ascii'),"%Y-%m-%d--%H-%M-%S")
-    except ValueError as ve:
-        logger.error("last visit ValueError %s",str(ve))
+    except ValueError as value_error:
+        logger.error("last visit ValueError %s",str(value_error))
         return 60
     mynow = datetime.strftime(datetime.now(),"%Y-%m-%d--%H-%M-%S")
 
     if abs((visited_parsed-datetime.strptime(mynow,"%Y-%m-%d--%H-%M-%S")).total_seconds())<60 :
-            myrefresh = 10
+        myrefresh = 10
     else:
-            myrefresh = 60
-    #print (datetime.strptime(visited,"%Y-%m-%d--%H-%M-%S")-datetime.strptime(mynow,"%Y-%m-%d--%H-%M-%S")).total_seconds()
-    print (myrefresh)
+        myrefresh = 60
+    logger.info("refresh: %s", myrefresh)
     return myrefresh
 
 
@@ -82,7 +82,7 @@ def get_image_from_webcam(config, picture):
 def annotate_picture(picture, picture_annotated, do_crop=False):
     '''draw timestamp on image'''
     image_from_picture = Image.open(picture)
-    
+
     if do_crop:
         logger.info("do_crop")
         left=250
@@ -96,7 +96,7 @@ def annotate_picture(picture, picture_annotated, do_crop=False):
         logger.info("no crop")
         draw = ImageDraw.Draw(image_from_picture)
         font_size = 40
-        
+
     font = ImageFont.truetype("Vera.ttf", font_size, encoding="unic")
     anno_time = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
     draw.text((22, 22), anno_time, fill='#202020', font=font)
