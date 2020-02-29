@@ -15,28 +15,45 @@ seeconfiguration file
 @deffield    updated: Updated
 '''
 
-import sys
-# import os
-
-
-from os import listdir, rename
-from os.path import isfile, join
-#import ftplib
-# import urllib.request
-from datetime import datetime
-# import shutil
-import configparser
-#import socket
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
+import configparser
+from datetime import datetime
+from os import listdir, rename
+from os.path import isfile, join
+import sys
+import logging
 
-from PIL import Image, ImageDraw, ImageFont
-
-# import helpers.tools
 from helpers import tools
 
 
+# create logger
+logger = logging.getLogger('webcamarch')
+logger.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+# fh = logging.FileHandler('spam.log')
+# fh.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+# create formatter and add it to the handlers
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add the handlers to the logger
+# logger.addHandler(fh)
+logger.addHandler(ch)
 
+logger.info('starting')
+
+
+# import os
+# import ftplib
+# import urllib.request
+# import shutil
+# import socket
+# import helpers.tools
 __all__ = []
 __version__ = 0.1
 __date__ = '2020-02-21'
@@ -89,6 +106,7 @@ USAGE
 ''' % (program_shortdesc, str(__date__))
 
     # helpers.tools.test1()
+    logger.info('log1')
     tools.test1()
     try:
         # Setup argument parser
@@ -105,7 +123,7 @@ USAGE
                             "%(default)s]", metavar="FILE")
 
         # Process arguments
-        args = parser.parse_args ( )
+        args = parser.parse_args()
 
         verbose = args.verbose
 
@@ -113,7 +131,6 @@ USAGE
 
         if verbose is not None and verbose > 0:
             print("Verbose mode on")
-
 
         config = configparser.ConfigParser()
         config.read(configfile)
@@ -126,28 +143,26 @@ USAGE
                                     '/home/werner/'
                                     'Dokumente/webcam/retry')
 
-        print(datetime.strftime(datetime.now(None), "%Y-%m-%d--%H-%M-%S - ")
-              + "get image from cam")
+        logger.info("get image from cam")
 
         if tools.get_image_from_webcam(config['WEBCAM']) == 0:
-            print("giving up, did not get an image from cam")
+            logger.critical("giving up, did not get an image from cam")
             sys.exit()
 
-        print(datetime.strftime(datetime.now(), "%Y-%m-%d--%H-%M-%S - ")
-              + "crop an annotate image")
+        logger.info("crop an annotate image")
 
         tools.annotate_picture(picture, picture_annotated)
 
-        print(datetime.strftime(datetime.now(), "%Y-%m-%d--%H-%M-%S - ") +
-              "send image to Webpage")
+        logger.info("send image to Webpage")
 
         filename = (datetime.strftime(datetime.now(), "%Y-%m-%d--%H-%M-%S")
                     + '.jpeg')
 
         session_is_open = 0
 
-        (session_is_open, session) = tools.send_imge_to_webpage(config['FTP'], filename)
-        
+        (session_is_open, session) = tools.send_imge_to_webpage(
+            config['FTP'], filename)
+
         if session_is_open == 1:
             files = [fil for fil in listdir(retrydir)
                      if (isfile(join(retrydir, fil))
@@ -156,8 +171,10 @@ USAGE
                 session.quit()
             else:
                 for file in files:
-                    if tools.send_imge_to_webpage_wos(config['FTP'], session, file):
-                        rename(join(retrydir, file), join(retrydir, file) + 'xxx')
+                    if tools.send_imge_to_webpage_wos(config['FTP'],
+                                                      session, file):
+                        rename(join(retrydir, file),
+                               join(retrydir, file) + 'xxx')
                 session.quit()
         return 0
     except KeyboardInterrupt:

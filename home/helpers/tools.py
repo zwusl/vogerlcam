@@ -4,34 +4,31 @@ Created on 22.02.2020
 @author: werner
 '''
 
-import urllib.request
-import shutil
-from os import rename
-from os.path import join
 from datetime import datetime
 import ftplib
+from os import rename
+from os.path import join
+import shutil
 import socket
-from PIL import Image # Image, ImageDraw, ImageFont
+import urllib.request
+import logging
 
+from PIL import Image, ImageDraw, ImageFont  # @UnresolvedImport
 
+logger = logging.getLogger('webcamarch.tools')
 
 
 def test1():
-    print("test1")
+    '''test log'''
+    logger.info('in test1')
 
-def test2(config):
-    print("test2")
-    print(config.get('url'))
-#     webcamurl = config.get('url')
-#     webcamuser = config.get('user', 'admin')
-#     webcampassword = config.get('password', fallback='admin')
-#     maxretrycount = config.getint('maxretrycount')
 
 def get_image_from_webcam(config):
+    '''get image from webcam and store it in picture'''
     picture = config.get('picture')
-    print("picture in " + picture)
+    url = config.get('url')
     passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-    passman.add_password(None, config.get('url'),
+    passman.add_password(None, url,
                          config.get('user'), config.get('password'))
     authhandler = urllib.request.HTTPDigestAuthHandler(passman)
     opener = urllib.request.build_opener(authhandler)
@@ -40,21 +37,23 @@ def get_image_from_webcam(config):
     got_image = 0
 
     for trycount in range(1, config.getint('maxretrycount') + 1):
-        print(f"get image try {trycount}")
+        logger.info("get image try %s", trycount)
         if got_image == 1:
             break
-        print(config.get('url'))
+        logger.info("get url %s", url)
         try:
-            with urllib.request.urlopen(config.get('url'), None, 10) as response:
+            with urllib.request.urlopen(url, None, 10) as response:
                 with open(picture, 'wb') as out_file:
                     shutil.copyfileobj(response, out_file)
             got_image = 1
         except urllib.error.URLError as url_error:
-            print("y%s" % url_error)
+            logger.error("URLError %s", url_error)
             got_image = 0
     return got_image
 
+
 def annotate_picture(picture, picture_annotated):
+    '''draw timestamp on image'''
     image_from_picture = Image.open(picture)
     draw = ImageDraw.Draw(image_from_picture)
     font = ImageFont.truetype("Vera.ttf", 40, encoding="unic")
@@ -63,8 +62,10 @@ def annotate_picture(picture, picture_annotated):
     draw.text((21, 21), anno_time, fill='#000000', font=font)
     draw.text((20, 20), anno_time, fill='#A0A0F0', font=font)
     image_from_picture.save(picture_annotated)
-    
+
+
 def send_imge_to_webpage(config, filename):
+    '''use ftp to send image to web'''
     session_is_open = 0
     try:
         session = ftplib.FTP(config.get('server'), config.get('user'),
@@ -75,19 +76,24 @@ def send_imge_to_webpage(config, filename):
         file = open(config.get('picture_annotated'), 'rb')
         session.storbinary('STOR ' + filename, file)
         file.close()
-        print(mylist)
+        logger.info("list %s ", mylist)
     except socket.timeout as sock_error:
         session_is_open = 0
-        rename(config.get('picture_annotated'), join(config.get('retrydir'), filename))
+        rename(config.get('picture_annotated'),
+               join(config.get('retrydir'), filename))
         print("sock error %s" % sock_error)
+        logger.error("sock error %s ", sock_error)
     except ftplib.all_errors as ftp_error:
         session_is_open = 0
-        rename(config.get('picture_annotated'), join(config.get('retrydir'), filename))
-        print("ftp error %s" % ftp_error)
-    
+        rename(config.get('picture_annotated'),
+               join(config.get('retrydir'), filename))
+        logger.error("ftp error %s ", ftp_error)
+
     return (session_is_open, session)
 
+
 def send_imge_to_webpage_wos(config, session, filename):
+    '''use ftp with open session'''
     success = 0
     try:
         session.cwd(config.get('dir'))
@@ -96,28 +102,8 @@ def send_imge_to_webpage_wos(config, session, filename):
         filehandler.close()
         success = 1
     except socket.timeout as sock_error:
-        print("%s" % sock_error)
+        logger.error("sock error %s ", sock_error)
     except ftplib.all_errors as ftp_error:
-        print("%s" % ftp_error)
-    
-    return success
-#         try:
-#             session = ftplib.FTP(ftpserver, ftpuser, ftppassword, timeout=10)
-#             session_is_open = 1
-#             session.cwd(ftpdir)
-#             mylist = session.nlst()
-#             file = open(picture_annotated, 'rb')
-#             session.storbinary('STOR ' + filename, file)
-#             file.close()
-#             print(mylist)
-#         except socket.timeout as sock_error:
-#             print("%s" % sock_error)
-#             print("ftp error:", sys.exc_info()[0])
-#             print(picture_annotated + " to " + join(retrydir, filename))
-#             rename(picture_annotated, join(retrydir, filename))
-#         except ftplib.all_errors as ftp_error:
-#             print("%s" % ftp_error)
-#             print("ftp error:", sys.exc_info()[0])
-#             print(picture_annotated + " to " + join(retrydir, filename))
-#             rename(picture_annotated, join(retrydir, filename))
+        logger.error("ftp error %s ", ftp_error)
 
+    return success

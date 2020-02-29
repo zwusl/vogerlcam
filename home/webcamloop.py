@@ -1,18 +1,19 @@
 
-import sys
-import os
-import ftplib
-#import urllib
-import urllib.request
-from datetime import datetime
-import shutil
-import time
-#import base64
-from PIL import Image, ImageDraw, ImageFont
 import configparser
-
+from datetime import datetime
+import ftplib
+import os
+import shutil
 import socket
+import sys
+import time
+import urllib.request
 
+from PIL import Image, ImageDraw, ImageFont
+
+
+#import urllib
+#import base64
 def getlastvisit():
     print (datetime.strftime(datetime.now(),"%Y-%m-%d--%H-%M-%S - ") + "get last visit")
     try:
