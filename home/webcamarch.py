@@ -3,7 +3,7 @@
 '''
 webcamarch -- get image from cam and ftp it
 
-seeconfiguration file
+see configuration file
 
 @author:     werner.fuerst@gmx.at
 
