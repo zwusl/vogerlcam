@@ -1,151 +1,208 @@
+#!/usr/local/bin/python3
+# encoding: utf-8
+'''
+webcamloop -- get image from cam and ftp it
 
+seeconfiguration file
+
+@author:     werner.fuerst@gmx.at
+
+@copyright:  2020 werner.fuerst
+
+@license:    Free software
+
+@contact:    werner.fuerst@gmx.at
+@deffield    updated: Updated
+'''
+
+from argparse import ArgumentParser
+from argparse import RawDescriptionHelpFormatter
 import configparser
-from datetime import datetime
-import ftplib
-import os
-import shutil
-import socket
 import sys
+import logging
 import time
-import urllib.request
-
-from PIL import Image, ImageDraw, ImageFont
 
 
-#import urllib
-#import base64
-def getlastvisit():
-    print (datetime.strftime(datetime.now(),"%Y-%m-%d--%H-%M-%S - ") + "get last visit")
-    try:
-        html = urllib.request.urlopen("http://xn--fr-xka.st/webcam/cam1/visited/lb.txt",None,10)
-        visited = html.read()
-        visited_parsed = datetime.strptime(visited.decode('ascii'),"%Y-%m-%d--%H-%M-%S")
-    except:
-        return 60
+from helpers import tools
 
-    #if visited.decode('ascii') == "" :
-    #    return 60
 
-    mynow = datetime.strftime(datetime.now(),"%Y-%m-%d--%H-%M-%S")
+# create logger
+logger = logging.getLogger('webcam')
+logger.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+# fh = logging.FileHandler('spam.log')
+# fh.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+# create formatter and add it to the handlers
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add the handlers to the logger
+# logger.addHandler(fh)
+logger.addHandler(ch)
 
-    if abs((visited_parsed-datetime.strptime(mynow,"%Y-%m-%d--%H-%M-%S")).total_seconds())<60 :
-            myrefresh = 10
+logger.info('starting')
+
+
+# import os
+# import ftplib
+# import urllib.request
+# import shutil
+# import socket
+# import helpers.tools
+__all__ = []
+__version__ = 0.1
+__date__ = '2020-02-21'
+__updated__ = '2020-02-21'
+
+DEBUG = 0
+TESTRUN = 0
+PROFILE = 0
+
+
+class CLIError(Exception):
+    '''Generic exception to raise and log different fatal errors.'''
+    def __init__(self, msg):
+        super(CLIError).__init__(type(self))
+        self.msg = "E: %s" % msg
+
+    def __str__(self):
+        return self.msg
+
+    def __unicode__(self):
+        return self.msg
+
+
+def main(argv=None):  # IGNORE:C0111
+    '''Command line options.'''
+
+    if argv is None:
+        argv = sys.argv
     else:
-            myrefresh = 60
-    #print (datetime.strptime(visited,"%Y-%m-%d--%H-%M-%S")-datetime.strptime(mynow,"%Y-%m-%d--%H-%M-%S")).total_seconds()
-    print (myrefresh)
-    return myrefresh
+        sys.argv.extend(argv)
 
-filename = 'webcam_1' + '.jpeg'
-filename0 = 'webcam_0' + '.jpeg'
+#     program_name = os.path.basename(sys.argv[0])
+    program_version = "v%s" % __version__
+    program_build_date = str(__updated__)
+    program_version_message = '%%(prog)s %s (%s)' % (program_version,
+                                                     program_build_date)
+    program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
+    program_license = '''%s
 
-picture = 'picture.jpeg'
-picture_crop = 'picture_crop.jpeg'
+  Created by user_name on %s.
+  Copyright 2020 organization_name. All rights reserved.
 
-config = configparser.ConfigParser()
-config.read('webcamloop.ini')
+  Licensed under the Apache License 2.0
+  http://www.apache.org/licenses/LICENSE-2.0
 
-localconfig = config['LOCAL']
-picture = localconfig.get('picture','picture.jpeg')
-picture_crop = localconfig.get('picture_crop','picture_crop.jpeg')
+  Distributed on an "AS IS" basis without warranties
+  or conditions of any kind, either express or implied.
 
-webcamconfig = config['WEBCAM']
-webcamurl = webcamconfig.get('url','http://192.168.0.19/cgi-bin/snapshot.cgi?channel=channel1')
-webcamuser = webcamconfig.get('user','admin')
-webcampassword = webcamconfig.get('password',fallback='admin')
-maxretrycount = webcamconfig.getint('maxretrycount')
+USAGE
+''' % (program_shortdesc, str(__date__))
 
-ftpconfig = config['FTP']
-ftpserver = ftpconfig.get('server')
-ftpuser = ftpconfig.get('user','anonymous')
-ftppassword = ftpconfig.get('password','None')
-ftpdir = ftpconfig.get('dir')
-
-
-
-#os.remove(filename)
-
-while True:
-
-    print (datetime.strftime(datetime.now(),"%Y-%m-%d--%H-%M-%S - ") + "get image from cam")
-
-
-    webcamurl = "http://192.168.0.13/cgi-bin/snapshot.cgi?channel=channel1"
-
-
-    passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-    passman.add_password(None, webcamurl, webcamuser, webcampassword)
-    authhandler = urllib.request.HTTPDigestAuthHandler(passman)
-    opener = urllib.request.build_opener(authhandler)
-    urllib.request.install_opener(opener)
-
-    gotImage = 0
-    for trycount in range(1, maxretrycount + 1) :
-        print (f"get image try {trycount}")
-        if gotImage == 1 :
-            break
-        try:
-            with urllib.request.urlopen(webcamurl,None,10) as response, open(picture, 'wb') as out_file:
-                shutil.copyfileobj(response, out_file)
-            gotImage = 1
-        except:
-            gotImage = 0
-
-    if gotImage == 0:
-        print ("giving up, did not get an image from cam, wait 5 sec")
-        time.sleep(5)
-        continue
-
-
-    print (datetime.strftime(datetime.now(),"%Y-%m-%d--%H-%M-%S - ") + "crop an annotate image")
-
-
-    im = Image.open(picture)
-    left=250
-    upper=400
-    right=left+1140
-    lower=1000
-    im_crop = im.crop((left, upper, right, lower))
-    draw  = ImageDraw.Draw(im_crop)
-    font  = ImageFont.truetype("Vera.ttf", 30, encoding="unic")
-
-    draw.text( (22,22), datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S"),fill='#202020',font=font)
-    draw.text( (21,21), datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S"),fill='#000000',font=font)
-    draw.text( (20,20), datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S"),fill='#A0A0F0',font=font)
-
-    im_crop.save(picture_crop)
-
-
-    print (datetime.strftime(datetime.now(),"%Y-%m-%d--%H-%M-%S - ") + "send image to Webpage")
-
-
+    # helpers.tools.test1()
+    logger.info('log1')
+    tools.test1()
     try:
-        session = ftplib.FTP(ftpserver,ftpuser,ftppassword,timeout=10)
-        session.cwd(ftpdir)
-        file = open(picture_crop,'rb')
-        session.storbinary('STOR ' + filename, file)
-        file.close()
-        session.rename(filename,filename0)
-        session.quit()
-    except socket.timeout as f:
-        print ("%s" % f)
-        print("socket error:", sys.exc_info()[0])
-    except ftplib.all_errors as e:
-        print ("%s" % e)
-        print("ftp error:", sys.exc_info()[0])
-    except:
-        print("Unexpected error:", sys.exc_info()[0])
+        # Setup argument parser
+        parser = ArgumentParser(description=program_license,
+                                formatter_class=RawDescriptionHelpFormatter)
+        parser.add_argument("-v", "--verbose", dest="verbose",
+                            action="count",
+                            help="set verbosity level "
+                            "[default: %(default)s]")
+        parser.add_argument('-V', '--version', action='version',
+                            version=program_version_message)
+        parser.add_argument("-c", "--config", dest="configfile",
+                            help="config file. [default: "
+                            "%(default)s]", metavar="FILE")
 
+        # Process arguments
+        args = parser.parse_args()
 
-    print (datetime.strftime(datetime.now(),"%Y-%m-%d--%H-%M-%S - ") + " loop")
+        verbose = args.verbose
 
-    time.sleep(4)
+        configfile = args.configfile
 
-    for cnt in range(74):
+        if verbose is not None and verbose > 0:
+            print("Verbose mode on")
 
-            mywait = getlastvisit()
-            if mywait == 60:
+        config = configparser.ConfigParser()
+        config.read(configfile)
+
+        local_config = config['DEFAULT']
+        ftp_config = config['FTP']
+        picture = local_config.get('picture_loop', 'loop.jpeg')
+        picture_annotated = local_config.get('picture_loop_annotated',
+                                             'loop_annotated.jpeg')
+        while True:
+
+            logger.info("get image from cam")
+    
+            if tools.get_image_from_webcam(config['WEBCAM'],
+                                           picture) == 0:
+                logger.critical("giving up, did not get an image from cam")
+                time.sleep(4)
+                continue
+    
+            logger.info("crop an annotate image %s %s", picture, picture_annotated)
+
+            tools.annotate_picture(picture, picture_annotated, True)
+    
+            logger.info("send image to Webpage")
+    
+            filename = 'webcam_0' + '.jpeg'
+    
+            session_is_open = 0
+    
+            (session_is_open, session) = tools.send_imge_to_webpage(
+                config['FTP'], ftp_config.get('dirloop'), filename, picture_annotated)
+
+            if session_is_open == 1:
+                session.quit()
+
+            time.sleep(4)
+            for cnt in range(74):
+                logger.info("in loop %s", cnt)
+                mywait = tools.getlastvisit()
+                if mywait == 60:
                     time.sleep(4)
-            else:
+                else:
                     break
 
+    except KeyboardInterrupt:
+        # handle keyboard interrupt #
+        return 0
+#     except Exception as ex_all:
+#         if DEBUG or TESTRUN:
+#             raise ex_all
+#         indent = len(program_name) * " "
+#         sys.stderr.write(program_name + ": " + repr(ex_all) + "\n")
+#         sys.stderr.write(indent + "  for help use --help")
+#         return 2
+
+
+if __name__ == "__main__":
+    if DEBUG:
+        sys.argv.append("-h")
+        sys.argv.append("-v")
+        sys.argv.append("-r")
+    if TESTRUN:
+        import doctest
+        doctest.testmod()
+    if PROFILE:
+        import cProfile
+        import pstats
+        profile_filename = 't1.w2_profile.txt'
+        cProfile.run('main()', profile_filename)
+        statsfile = open("profile_stats.txt", "wb")
+        ps_prof = pstats.Stats(profile_filename, stream=statsfile)
+        stats = ps_prof.strip_dirs().sort_stats('cumulative')
+        stats.print_stats()
+        statsfile.close()
+        sys.exit(0)
+    sys.exit(main())

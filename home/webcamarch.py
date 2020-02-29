@@ -28,7 +28,7 @@ from helpers import tools
 
 
 # create logger
-logger = logging.getLogger('webcamarch')
+logger = logging.getLogger('webcam')
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
 # fh = logging.FileHandler('spam.log')
@@ -136,8 +136,9 @@ USAGE
         config.read(configfile)
 
         local_config = config['DEFAULT']
-        picture = local_config.get('picture', 'archive.jpeg')
-        picture_annotated = local_config.get('picture_annotated',
+        ftp_config = config['FTP']
+        picture = local_config.get('picture_arch', 'archive.jpeg')
+        picture_annotated = local_config.get('picture_arch_annotated',
                                              'archive_crop.jpeg')
         retrydir = local_config.get('retrydir',
                                     '/home/werner/'
@@ -145,7 +146,8 @@ USAGE
 
         logger.info("get image from cam")
 
-        if tools.get_image_from_webcam(config['WEBCAM']) == 0:
+        if tools.get_image_from_webcam(config['WEBCAM'],
+                                       picture) == 0:
             logger.critical("giving up, did not get an image from cam")
             sys.exit()
 
@@ -161,7 +163,7 @@ USAGE
         session_is_open = 0
 
         (session_is_open, session) = tools.send_imge_to_webpage(
-            config['FTP'], filename)
+            config['FTP'], ftp_config.get('dirarch'), filename, picture_annotated)
 
         if session_is_open == 1:
             files = [fil for fil in listdir(retrydir)
