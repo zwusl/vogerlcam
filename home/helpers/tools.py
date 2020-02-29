@@ -6,19 +6,18 @@ Created on 22.02.2020
 
 import urllib.request
 import shutil
+from os import rename
 from os.path import join
 from datetime import datetime
 import ftplib
 import socket
+from PIL import Image # Image, ImageDraw, ImageFont
 
-from PIL import Image, ImageDraw, ImageFont
 
 
 
 def test1():
     print("test1")
-
-
 
 def test2(config):
     print("test2")
@@ -66,6 +65,7 @@ def annotate_picture(picture, picture_annotated):
     image_from_picture.save(picture_annotated)
     
 def send_imge_to_webpage(config, filename):
+    session_is_open = 0
     try:
         session = ftplib.FTP(config.get('server'), config.get('user'),
                              config.get('password'), timeout=10)
@@ -77,9 +77,13 @@ def send_imge_to_webpage(config, filename):
         file.close()
         print(mylist)
     except socket.timeout as sock_error:
-        print("%s" % sock_error)
+        session_is_open = 0
+        rename(config.get('picture_annotated'), join(config.get('retrydir'), filename))
+        print("sock error %s" % sock_error)
     except ftplib.all_errors as ftp_error:
-        print("%s" % ftp_error)
+        session_is_open = 0
+        rename(config.get('picture_annotated'), join(config.get('retrydir'), filename))
+        print("ftp error %s" % ftp_error)
     
     return (session_is_open, session)
 

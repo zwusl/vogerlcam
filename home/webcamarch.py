@@ -21,15 +21,16 @@ import sys
 
 from os import listdir, rename
 from os.path import isfile, join
-import ftplib
+#import ftplib
 # import urllib.request
 from datetime import datetime
 # import shutil
 import configparser
-import socket
+#import socket
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 
+from PIL import Image, ImageDraw, ImageFont
 
 # import helpers.tools
 from helpers import tools
@@ -104,9 +105,10 @@ USAGE
                             "%(default)s]", metavar="FILE")
 
         # Process arguments
-        args = parser.parse_args()
+        args = parser.parse_args ( )
 
         verbose = args.verbose
+
         configfile = args.configfile
 
         if verbose is not None and verbose > 0:
@@ -145,7 +147,7 @@ USAGE
         session_is_open = 0
 
         (session_is_open, session) = tools.send_imge_to_webpage(config['FTP'], filename)
-
+        
         if session_is_open == 1:
             files = [fil for fil in listdir(retrydir)
                      if (isfile(join(retrydir, fil))
