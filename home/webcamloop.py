@@ -15,6 +15,11 @@ see configuration file
 @deffield    updated: Updated
 '''
 
+__all__ = []
+__version__ = 0.1
+__date__ = '2020-02-21'
+__updated__ = '2020-03-01'
+
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 import configparser
@@ -29,51 +34,20 @@ from helpers import tools
 # create logger
 logger = logging.getLogger('webcam')
 logger.setLevel(logging.DEBUG)
-# create file handler which logs even debug messages
-# fh = logging.FileHandler('spam.log')
-# fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 # create formatter and add it to the handlers
 formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# fh.setFormatter(formatter)
 ch.setFormatter(formatter)
 # add the handlers to the logger
 # logger.addHandler(fh)
 logger.addHandler(ch)
 
-logger.info('starting')
-
-
-# import os
-# import ftplib
-# import urllib.request
-# import shutil
-# import socket
-# import helpers.tools
-__all__ = []
-__version__ = 0.1
-__date__ = '2020-02-21'
-__updated__ = '2020-02-21'
 
 DEBUG = 0
 TESTRUN = 0
-PROFILE = 0
-
-
-class CLIError(Exception):
-    '''Generic exception to raise and log different fatal errors.'''
-    def __init__(self, msg):
-        super(CLIError).__init__(type(self))
-        self.msg = "E: %s" % msg
-
-    def __str__(self):
-        return self.msg
-
-    def __unicode__(self):
-        return self.msg
 
 
 def main(argv=None):  # IGNORE:C0111
@@ -92,11 +66,10 @@ def main(argv=None):  # IGNORE:C0111
     program_shortdesc = __import__('__main__').__doc__.split("\n")[1]
     program_license = '''%s
 
-  Created by user_name on %s.
-  Copyright 2020 organization_name. All rights reserved.
+  Created by wf on %s.
+  Copyright 2020 wf. All rights reserved.
 
-  Licensed under the Apache License 2.0
-  http://www.apache.org/licenses/LICENSE-2.0
+  Free Software
 
   Distributed on an "AS IS" basis without warranties
   or conditions of any kind, either express or implied.
@@ -105,8 +78,8 @@ USAGE
 ''' % (program_shortdesc, str(__date__))
 
     # helpers.tools.test1()
-    logger.info('log1')
-    tools.test1()
+    logger.info('starting')
+
     try:
         # Setup argument parser
         parser = ArgumentParser(description=program_license,
@@ -192,19 +165,7 @@ if __name__ == "__main__":
     if DEBUG:
         sys.argv.append("-h")
         sys.argv.append("-v")
-        sys.argv.append("-r")
     if TESTRUN:
         import doctest
         doctest.testmod()
-    if PROFILE:
-        import cProfile
-        import pstats
-        profile_filename = 't1.w2_profile.txt'
-        cProfile.run('main()', profile_filename)
-        statsfile = open("profile_stats.txt", "wb")
-        ps_prof = pstats.Stats(profile_filename, stream=statsfile)
-        stats = ps_prof.strip_dirs().sort_stats('cumulative')
-        stats.print_stats()
-        statsfile.close()
-        sys.exit(0)
     sys.exit(main())
