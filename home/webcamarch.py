@@ -15,6 +15,11 @@ see configuration file
 @deffield    updated: Updated
 '''
 
+__all__ = []
+__version__ = 0.1
+__date__ = '2020-02-21'
+__updated__ = '2020-02-21'
+
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 import configparser
@@ -48,36 +53,11 @@ logger.addHandler(ch)
 logger.info('starting')
 
 
-# import os
-# import ftplib
-# import urllib.request
-# import shutil
-# import socket
-# import helpers.tools
-__all__ = []
-__version__ = 0.1
-__date__ = '2020-02-21'
-__updated__ = '2020-02-21'
-
 DEBUG = 0
 TESTRUN = 0
-PROFILE = 0
 
 
-class CLIError(Exception):
-    '''Generic exception to raise and log different fatal errors.'''
-    def __init__(self, msg):
-        super(CLIError).__init__(type(self))
-        self.msg = "E: %s" % msg
-
-    def __str__(self):
-        return self.msg
-
-    def __unicode__(self):
-        return self.msg
-
-
-def main(argv=None):  # IGNORE:C0111
+def main(argv=None):
     '''Command line options.'''
 
     if argv is None:
@@ -162,6 +142,7 @@ USAGE
 
         session_is_open = 0
 
+
         (session_is_open, session) = tools.send_imge_to_webpage(
             config['FTP'], ftp_config.get('dirarch'),
             "%Y-%m-%d",
@@ -170,7 +151,7 @@ USAGE
         if session_is_open == 1:
             files = [fil for fil in listdir(retrydir)
                      if (isfile(join(retrydir, fil))
-                         and fil.endswith('.jpeg'))]
+                         and fil.endswith('_sm.jpg'))]
             if not files:
                 session.quit()
             else:
@@ -201,15 +182,4 @@ if __name__ == "__main__":
     if TESTRUN:
         import doctest
         doctest.testmod()
-    if PROFILE:
-        import cProfile
-        import pstats
-        profile_filename = 't1.w2_profile.txt'
-        cProfile.run('main()', profile_filename)
-        statsfile = open("profile_stats.txt", "wb")
-        ps_prof = pstats.Stats(profile_filename, stream=statsfile)
-        stats = ps_prof.strip_dirs().sort_stats('cumulative')
-        stats.print_stats()
-        statsfile.close()
-        sys.exit(0)
     sys.exit(main())

@@ -123,21 +123,17 @@ def send_imge_to_webpage(config, webdir, subdir,
                              config.get('password'), timeout=10)
         session_is_open = 1
         session.cwd(webdir)
-        for name, facts in session.mlsd(".",["type"]):
-            if facts["type"] == "dir":
-                print("isdir: "+ name)
-        # session.mkd('2020')
+
         if subdir != '':
             formatted_subdir = datetime.strftime(datetime.now(), subdir)
             create_missing_dir(session, formatted_subdir)
             session.cwd(formatted_subdir)
         # mylist = session.nlst()
-        mylist = session.mlsd()
+
         file = open(picture_annotated, 'rb')
         session.storbinary('STOR ' + filename + '.tmp', file)
         file.close()
         session.rename(filename + '.tmp', filename)
-        logger.info("list %s ", mylist)
     except socket.timeout as sock_error:
         session_is_open = 0
         rename(picture_annotated,
@@ -180,11 +176,11 @@ def create_missing_dir(session, dir_to_check):
                 print("isdir: "+ name)
                 remotefoldername_exists = 1
                 break
-        if(remotefoldername_exists == 0):
+        if remotefoldername_exists == 0:
             session.mkd(dir_to_check)
-            logger.debug("folder does not exitst, ftp.mkd: " + dir_to_check)
+            logger.debug("folder does not exitst, ftp.mkd: %s", dir_to_check)
         else:
-            logger.debug("folder did exist: " + dir_to_check)
+            logger.debug("folder did exist: %s", dir_to_check)
     
     else:
         # nlst legacy support for ftp servers that do not support mlsd e.g. vsftp
@@ -194,9 +190,9 @@ def create_missing_dir(session, dir_to_check):
         dirlist = [ item.pop() for item in items if item[0][0] == 'd' ]
         #print( "directrys", directorys )
         #print( 'remote_ftp' in directorys )
-        if not (dir_to_check in dirlist):
+        if not dir_to_check in dirlist:
             session.mkd(dir_to_check)
-            logging.debug("folder does not exitst, ftp.mkd: " + dir_to_check)
+            logging.debug("folder does not exitst, ftp.mkd: %s", dir_to_check)
         else:
-            logging.debug("folder did exist: " + dir_to_check)
+            logging.debug("folder did exist: %s", dir_to_check)
 
