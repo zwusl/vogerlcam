@@ -153,17 +153,18 @@ USAGE
 
         logger.info("crop an annotate image")
 
-        tools.annotate_picture(picture, picture_annotated)
+        tools.annotate_picture(picture, picture_annotated, 0, 1)
 
         logger.info("send image to Webpage")
 
         filename = (datetime.strftime(datetime.now(), "%Y-%m-%d--%H-%M-%S")
-                    + '.jpeg')
+                    + '_sm.jpg')
 
         session_is_open = 0
 
         (session_is_open, session) = tools.send_imge_to_webpage(
             config['FTP'], ftp_config.get('dirarch'),
+            "%Y-%m-%d",
             filename, picture_annotated)
 
         if session_is_open == 1:

@@ -135,6 +135,7 @@ USAGE
 
             (session_is_open, session) = tools.send_imge_to_webpage(
                 config['FTP'], ftp_config.get('dirloop'),
+                '',
                 filename, picture_annotated)
 
             if session_is_open == 1:

@@ -79,7 +79,8 @@ def get_image_from_webcam(config, picture):
     return got_image
 
 
-def annotate_picture(picture, picture_annotated, do_crop=False):
+def annotate_picture(picture, picture_annotated,
+                     do_crop=False, do_resize=False):
     '''draw timestamp on image'''
     image_from_picture = Image.open(picture)
 
@@ -87,27 +88,34 @@ def annotate_picture(picture, picture_annotated, do_crop=False):
         logger.info("do_crop")
         left=250
         upper=400
-        right=left++1140
+        right=left+1140
         lower=1000
         im_crop = image_from_picture.crop((left, upper, right, lower))
-        draw = ImageDraw.Draw(im_crop)
         font_size = 30
     else:
         logger.info("no crop")
-        draw = ImageDraw.Draw(image_from_picture)
+        im_crop = image_from_picture
         font_size = 40
 
+    if do_resize:
+        font_size = 24
+        size = 1140, 1140
+        try:
+            im_crop.thumbnail(size, Image.ANTIALIAS)
+        except IOError:
+            logger.error("cannot resize image")
+
+    draw = ImageDraw.Draw(im_crop)
     font = ImageFont.truetype("Vera.ttf", font_size, encoding="unic")
     anno_time = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
     draw.text((22, 22), anno_time, fill='#202020', font=font)
     draw.text((21, 21), anno_time, fill='#000000', font=font)
     draw.text((20, 20), anno_time, fill='#A0A0F0', font=font)
-    if do_crop:
-        im_crop.save(picture_annotated)
-    else:
-        image_from_picture.save(picture_annotated)
+    
+    im_crop.save(picture_annotated)
 
-def send_imge_to_webpage(config, webdir, filename, picture_annotated):
+def send_imge_to_webpage(config, webdir, subdir,
+                         filename, picture_annotated):
     '''use ftp to send image to web'''
     session_is_open = 0
     try:
@@ -115,7 +123,16 @@ def send_imge_to_webpage(config, webdir, filename, picture_annotated):
                              config.get('password'), timeout=10)
         session_is_open = 1
         session.cwd(webdir)
-        mylist = session.nlst()
+        for name, facts in session.mlsd(".",["type"]):
+            if facts["type"] == "dir":
+                print("isdir: "+ name)
+        # session.mkd('2020')
+        if subdir != '':
+            formatted_subdir = datetime.strftime(datetime.now(), subdir)
+            create_missing_dir(session, formatted_subdir)
+            session.cwd(formatted_subdir)
+        # mylist = session.nlst()
+        mylist = session.mlsd()
         file = open(picture_annotated, 'rb')
         session.storbinary('STOR ' + filename + '.tmp', file)
         file.close()
@@ -150,3 +167,36 @@ def send_imge_to_webpage_wos(config, session, filename):
         logger.error("ftp error %s ", ftp_error)
 
     return success
+
+def create_missing_dir(session, dir_to_check):
+    '''check or create dir'''
+    use_mlsd = 1
+    if use_mlsd:
+        # if ftp server supports mlsd, use it, nlst is marked as deprecated in ftplib
+        # check if remotefoldername exists
+        remotefoldername_exists = 0
+        for name, facts in session.mlsd(".",["type"]):
+            if facts["type"] == "dir" and name == dir_to_check:
+                print("isdir: "+ name)
+                remotefoldername_exists = 1
+                break
+        if(remotefoldername_exists == 0):
+            session.mkd(dir_to_check)
+            logger.debug("folder does not exitst, ftp.mkd: " + dir_to_check)
+        else:
+            logger.debug("folder did exist: " + dir_to_check)
+    
+    else:
+        # nlst legacy support for ftp servers that do not support mlsd e.g. vsftp
+        items = []
+        session.retrlines('LIST', items.append ) 
+        items = map( str.split, items )
+        dirlist = [ item.pop() for item in items if item[0][0] == 'd' ]
+        #print( "directrys", directorys )
+        #print( 'remote_ftp' in directorys )
+        if not (dir_to_check in dirlist):
+            session.mkd(dir_to_check)
+            logging.debug("folder does not exitst, ftp.mkd: " + dir_to_check)
+        else:
+            logging.debug("folder did exist: " + dir_to_check)
+
