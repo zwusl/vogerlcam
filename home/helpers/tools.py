@@ -91,14 +91,14 @@ def annotate_picture(picture, picture_annotated,
         right=left+1140
         lower=1000
         im_crop = image_from_picture.crop((left, upper, right, lower))
-        font_size = 30
+        font_size = 18
     else:
         logger.info("no crop")
         im_crop = image_from_picture
-        font_size = 40
+        font_size = 18
 
     if do_resize:
-        font_size = 24
+        font_size = 18
         size = 1140, 1140
         try:
             im_crop.thumbnail(size, Image.ANTIALIAS)
@@ -108,9 +108,9 @@ def annotate_picture(picture, picture_annotated,
     draw = ImageDraw.Draw(im_crop)
     font = ImageFont.truetype("Vera.ttf", font_size, encoding="unic")
     anno_time = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
-    draw.text((22, 22), anno_time, fill='#202020', font=font)
-    draw.text((21, 21), anno_time, fill='#000000', font=font)
-    draw.text((20, 20), anno_time, fill='#A0A0F0', font=font)
+    draw.text((12, 12), anno_time, fill='#202020', font=font)
+    draw.text((11, 11), anno_time, fill='#000000', font=font)
+    draw.text((10, 10), anno_time, fill='#A0A0F0', font=font)
     
     im_crop.save(picture_annotated)
 
