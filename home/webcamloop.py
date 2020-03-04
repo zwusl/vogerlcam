@@ -108,7 +108,6 @@ USAGE
         config.read(configfile)
 
         local_config = config['DEFAULT']
-        ftp_config = config['FTP']
         picture = local_config.get('picture_loop', 'loop.jpeg')
         picture_annotated = local_config.get('picture_loop_annotated',
                                              'loop_annotated.jpeg')
@@ -134,8 +133,7 @@ USAGE
             session_is_open = 0
 
             (session_is_open, session) = tools.send_imge_to_webpage(
-                config['FTP'], ftp_config.get('dirloop'),
-                '',
+                config['FTPLOOP'],
                 filename, picture_annotated)
 
             if session_is_open == 1:
@@ -144,7 +142,8 @@ USAGE
             time.sleep(4)
             for cnt in range(74):
                 logger.info("in loop %s", cnt)
-                mywait = tools.getlastvisit()
+                logger.info("semaphore: %s",config['SEMAPHORE']['last_visit_url'])
+                mywait = tools.get_last_visit(config['SEMAPHORE']['last_visit_url'])
                 if mywait == 60:
                     time.sleep(4)
                 else:

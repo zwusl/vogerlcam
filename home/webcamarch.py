@@ -116,7 +116,6 @@ USAGE
         config.read(configfile)
 
         local_config = config['DEFAULT']
-        ftp_config = config['FTP']
         picture = local_config.get('picture_arch', 'archive.jpeg')
         picture_annotated = local_config.get('picture_arch_annotated',
                                              'archive_crop.jpeg')
@@ -144,8 +143,7 @@ USAGE
 
 
         (session_is_open, session) = tools.send_imge_to_webpage(
-            config['FTP'], ftp_config.get('dirarch'),
-            "%Y-%m-%d",
+            config['FTPARCH'],
             filename, picture_annotated)
 
         if session_is_open == 1:
@@ -156,7 +154,7 @@ USAGE
                 session.quit()
             else:
                 for file in files:
-                    if tools.send_imge_to_webpage_wos(config['FTP'],
+                    if tools.send_imge_to_webpage_wos(config['FTPARCH'],
                                                       session, file):
                         rename(join(retrydir, file),
                                join(retrydir, file) + 'xxx')

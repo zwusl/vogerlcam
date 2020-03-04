@@ -24,11 +24,11 @@ def test1():
     logger.info('in test1')
 
 
-def getlastvisit():
+def get_last_visit(last_visit_url):
     """get timestamp of last visit - returns wait 10/60"""
     logger.info("get last visit")
     try:
-        html = urllib.request.urlopen("http://xn--fr-xka.st/webcam/cam1/visited/lb.txt",None,10)
+        html = urllib.request.urlopen(last_visit_url,None,10)
         visited = html.read()
         visited_parsed = datetime.strptime(visited.decode('ascii'),"%Y-%m-%d--%H-%M-%S")
     except ValueError as value_error:
@@ -114,7 +114,7 @@ def annotate_picture(picture, picture_annotated,
     
     im_crop.save(picture_annotated)
 
-def send_imge_to_webpage(config, webdir, subdir,
+def send_imge_to_webpage(config,
                          filename, picture_annotated):
     '''use ftp to send image to web'''
     session_is_open = 0
@@ -122,10 +122,10 @@ def send_imge_to_webpage(config, webdir, subdir,
         session = ftplib.FTP(config.get('server'), config.get('user'),
                              config.get('password'), timeout=10)
         session_is_open = 1
-        session.cwd(webdir)
+        session.cwd(config.get('dir'))
 
-        if subdir != '':
-            formatted_subdir = datetime.strftime(datetime.now(), subdir)
+        if config.get('subdir') != '':
+            formatted_subdir = datetime.strftime(datetime.now(), config.get('subdir'))
             create_missing_dir(session, formatted_subdir)
             session.cwd(formatted_subdir)
         # mylist = session.nlst()
@@ -152,7 +152,13 @@ def send_imge_to_webpage_wos(config, session, filename):
     '''use ftp with open session'''
     success = 0
     try:
-        session.cwd(config.get('dirarch'))
+        session.cwd(config.get('dir'))
+
+        if config.get('subdir') != '':
+            formatted_subdir = datetime.strftime(datetime.now(), config.get('subdir'))
+            create_missing_dir(session, formatted_subdir)
+            session.cwd(formatted_subdir)
+
         filehandler = open(join(config.get('retrydir'), filename), 'rb')
         session.storbinary('STOR ' + filename, filehandler)
         filehandler.close()
@@ -173,7 +179,6 @@ def create_missing_dir(session, dir_to_check):
         remotefoldername_exists = 0
         for name, facts in session.mlsd(".",["type"]):
             if facts["type"] == "dir" and name == dir_to_check:
-                print("isdir: "+ name)
                 remotefoldername_exists = 1
                 break
         if remotefoldername_exists == 0:
@@ -188,8 +193,6 @@ def create_missing_dir(session, dir_to_check):
         session.retrlines('LIST', items.append ) 
         items = map( str.split, items )
         dirlist = [ item.pop() for item in items if item[0][0] == 'd' ]
-        #print( "directrys", directorys )
-        #print( 'remote_ftp' in directorys )
         if not dir_to_check in dirlist:
             session.mkd(dir_to_check)
             logging.debug("folder does not exitst, ftp.mkd: %s", dir_to_check)
