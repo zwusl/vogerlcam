@@ -132,7 +132,7 @@ USAGE
 
             session_is_open = 0
 
-            (session_is_open, session) = tools.send_imge_to_webpage(
+            (session_is_open, session) = tools.send_image_to_webpage(
                 config['FTPLOOP'],
                 filename, picture_annotated)
 

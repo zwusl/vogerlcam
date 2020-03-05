@@ -5,21 +5,20 @@
 #print("Content-Type: text/html")    # HTML is following
 #print("")                             # blank line, end of headers
 
+import os
+import glob
+import datetime
+import json
 import cgi
 import cgitb; cgitb.enable()
 
-import glob, os
-
-import datetime
-
-import json
-    
 
 
 def header():
-   print "Content-Type: application/json;charset=iso-8859-1"
-#   print "Content-Type: text/html;charset=iso-8859-1"
-   print ""
+    '''header'''
+    print("Content-Type: application/json;charset=iso-8859-1")
+    #   print "Content-Type: text/html;charset=iso-8859-1"
+    print("")
 
 
 def nextimage(mymodus,mydir,mycurrent,myuhrzeit):
@@ -28,10 +27,10 @@ def nextimage(mymodus,mydir,mycurrent,myuhrzeit):
 
     if mymodus != "nearest":
         myfiles.sort()
-        
+    
         myindex = myfiles.index(mycurrent) if mycurrent in myfiles else None
 
-        if myindex != None:
+        if myindex is not None:
             if mymodus == "next" and myindex < (len(myfiles)-1):
                 mynext = myfiles[myindex + 1]
             elif mymodus == "previous" and myindex > 0:
@@ -42,25 +41,28 @@ def nextimage(mymodus,mydir,mycurrent,myuhrzeit):
             mynext = nextday(myaction,mycurrent,myuhrzeit)
     else:
         mytarget = datetime.datetime.strptime(myuhrzeit,"%H-%M-%S")
-        mynext = min(myfiles, key=lambda myx: abs(datetime.datetime.strptime(myx[-15:-7],"%H-%M-%S") - mytarget))
-    
-    return mynext    
+        mynext = min(myfiles,
+                     key=lambda myx: abs(datetime.datetime.strptime(myx[-15:-7],
+                                                                    "%H-%M-%S") - mytarget))
+
+    return mynext
 
 
 def nextday(myaction,mycurrent,myuhrzeit):
     mydir1 = os.path.dirname(mycurrent)
     mydir2 = os.path.dirname(mydir1)
 
-    mydirlist = [(mydir2 + "/" + filename) for filename in os.listdir(mydir2) if os.path.isdir(os.path.join(mydir2,filename))]
+    mydirlist = [(mydir2 + "/" + filename) for filename in os.listdir(mydir2)
+                 if os.path.isdir(os.path.join(mydir2,filename))]
     mydirlist.sort()
-    
+
     mynextdir = ""
     myindex = mydirlist.index(mydir1)
     if myaction[0] == "n" and myindex < (len(mydirlist)-1):
-        mynextdir = mydirlist[myindex+1];
+        mynextdir = mydirlist[myindex+1]
     elif myaction[0] == "p" and myindex > 0:
         mynextdir = mydirlist[myindex-1]
-    
+
     if mynextdir != "":
         if myaction[1] == "i":
             if myaction == "pi":
@@ -70,8 +72,8 @@ def nextday(myaction,mycurrent,myuhrzeit):
         mynearest = nextimage("nearest",mynextdir,mycurrent,myuhrzeit)
     else:
         mynearest = mycurrent
-    
-    return mynearest    
+
+    return mynearest
 
 
 
@@ -104,7 +106,7 @@ if myaction[1] == "i" :
 else:
     mynext = nextday(myaction,mycurrent,myuhrzeit)
     myfound.append(mynext.replace("../","../../"))
-    myfound.append(myuhrzeit)    
+    myfound.append(myuhrzeit)
 
 dateTimeObj = datetime.datetime.now()
  
@@ -116,9 +118,8 @@ myfile = open(myfilename,"w")
 
 myfile.write(timestampStr)
 
-myfile.close() 
+myfile.close()
 
 json_string=json.dumps(myfound)
-    
-print json_string
 
+print(json_string)

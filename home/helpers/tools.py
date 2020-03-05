@@ -114,7 +114,7 @@ def annotate_picture(picture, picture_annotated,
     
     im_crop.save(picture_annotated)
 
-def send_imge_to_webpage(config,
+def send_image_to_webpage(config,
                          filename, picture_annotated):
     '''use ftp to send image to web'''
     session_is_open = 0
@@ -148,7 +148,7 @@ def send_imge_to_webpage(config,
     return (session_is_open, session)
 
 
-def send_imge_to_webpage_wos(config, session, filename):
+def send_image_to_webpage_wos(config, session, filename):
     '''use ftp with open session'''
     success = 0
     try:

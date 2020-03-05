@@ -142,7 +142,7 @@ USAGE
         session_is_open = 0
 
 
-        (session_is_open, session) = tools.send_imge_to_webpage(
+        (session_is_open, session) = tools.send_image_to_webpage(
             config['FTPARCH'],
             filename, picture_annotated)
 
@@ -154,7 +154,7 @@ USAGE
                 session.quit()
             else:
                 for file in files:
-                    if tools.send_imge_to_webpage_wos(config['FTPARCH'],
+                    if tools.send_image_to_webpage_wos(config['FTPARCH'],
                                                       session, file):
                         rename(join(retrydir, file),
                                join(retrydir, file) + 'xxx')
