@@ -79,7 +79,7 @@ def get_image_from_webcam(config, picture):
     return got_image
 
 
-def annotate_picture(picture, picture_annotated,
+def annotate_image(picture, picture_annotated,
                      do_crop=False, do_resize=False):
     '''draw timestamp on image'''
     image_from_picture = Image.open(picture)
