@@ -118,6 +118,7 @@ def send_image_to_webpage(config,
                          filename, picture_annotated):
     '''use ftp to send image to web'''
     session_is_open = 0
+    session = ""
     try:
         session = ftplib.FTP(config.get('server'), config.get('user'),
                              config.get('password'), timeout=10)
