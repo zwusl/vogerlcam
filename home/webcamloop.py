@@ -9,7 +9,7 @@ see configuration file
 
 @copyright:  2020 werner.fuerst
 
-@license:    Free software
+@license:    CC0
 
 @contact:    werner.fuerst@gmx.at
 @deffield    updated: Updated
