@@ -82,7 +82,7 @@ USAGE
     try:
         # Setup argument parser
         parser = ArgumentParser(description=program_license,
-                            formatter_class=RawDescriptionHelpFormatter)
+                                formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-v", "--verbose", dest="verbose",
                             action="count",
                             help="set verbosity level "
@@ -109,13 +109,13 @@ USAGE
         local_config = config['DEFAULT']
         image_file = local_config.get('image_loop', 'loop.jpeg')
         image_file_annotated = local_config.get('image_loop_annotated',
-                                             'loop_annotated.jpeg')
+                                                'loop_annotated.jpeg')
         while True:
 
             logger.info("get image from cam")
 
             if not tools.get_image_from_webcam(config['WEBCAM'],
-                                           image_file):
+                                               image_file):
                 logger.critical(
                     "giving up, did not get an image from cam")
                 time.sleep(4)
@@ -141,11 +141,8 @@ USAGE
             time.sleep(4)
             for cnt in range(74):
                 logger.info("in loop %s", cnt)
-                logger.info(
-                    "semaphore: %s",
-                    config['SEMAPHORE']['last_visit_url'])
                 if tools.is_there_anybody_out_there(
-                        config['SEMAPHORE']['last_visit_url']):
+                        config['SEMAPHORE']):
                     break
                 time.sleep(4)
 

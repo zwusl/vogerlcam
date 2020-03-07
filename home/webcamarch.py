@@ -117,7 +117,7 @@ USAGE
         local_config = config['DEFAULT']
         image_file = local_config.get('image_arch', 'archive.jpeg')
         image_file_annotated = local_config.get('image_arch_annotated',
-                                             'archive_crop.jpeg')
+                                                'archive_crop.jpeg')
         retrydir = local_config.get('retrydir',
                                     '/home/werner/'
                                     'Dokumente/webcam/retry')
@@ -125,7 +125,7 @@ USAGE
         logger.info("get image from cam")
 
         if not tools.get_image_from_webcam(config['WEBCAM'],
-                                       image_file):
+                                           image_file):
             logger.critical("giving up, did not get an image from cam")
             sys.exit()
 
@@ -150,7 +150,7 @@ USAGE
             else:
                 for file in files:
                     if tools.send_image_to_webpage_wos(config['FTPARCH'],
-                                                      session, file):
+                                                       session, file):
                         rename(join(retrydir, file),
                                join(retrydir, file) + 'xxx')
                 session.quit()
