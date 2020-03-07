@@ -16,7 +16,7 @@ see configuration file
 '''
 
 __all__ = []
-__version__ = 0.1
+__version__ = 0.3
 __date__ = '2020-02-21'
 __updated__ = '2020-03-07'
 
