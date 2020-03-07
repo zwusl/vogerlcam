@@ -16,6 +16,7 @@ from http.client import RemoteDisconnected  # @UnresolvedImport
 
 from PIL import Image, ImageDraw, ImageFont  # @UnresolvedImport
 
+
 logger = logging.getLogger('webcam.tools')
 
 
@@ -24,7 +25,7 @@ def test1():
     logger.info('in test1')
 
 
-def get_last_visit(last_visit_url):
+def is_there_anybody_out_there(last_visit_url):
     """get timestamp of last visit - returns wait 10/60"""
     logger.info("get last visit")
     try:
@@ -33,15 +34,18 @@ def get_last_visit(last_visit_url):
         visited_parsed = datetime.strptime(visited.decode('ascii'),"%Y-%m-%d--%H-%M-%S")
     except ValueError as value_error:
         logger.error("last visit ValueError %s",str(value_error))
-        return 60
+        return False
     mynow = datetime.strftime(datetime.now(),"%Y-%m-%d--%H-%M-%S")
 
-    if abs((visited_parsed-datetime.strptime(mynow,"%Y-%m-%d--%H-%M-%S")).total_seconds())<60 :
-        myrefresh = 10
-    else:
-        myrefresh = 60
-    logger.info("refresh: %s", myrefresh)
-    return myrefresh
+    we_have_a_visitor = abs(
+        (
+            visited_parsed-
+            datetime.strptime(mynow,"%Y-%m-%d--%H-%M-%S")
+        ).total_seconds()
+        )<60
+
+    logger.info("refresh: %s", we_have_a_visitor)
+    return we_have_a_visitor
 
 
 def get_image_from_webcam(config, picture):
@@ -55,7 +59,7 @@ def get_image_from_webcam(config, picture):
     opener = urllib.request.build_opener(authhandler)
     urllib.request.install_opener(opener)
 
-    got_image = 0
+    got_image = False
 
     logger.info("get url %s", url)
     for trycount in range(1, config.getint('maxretrycount') + 1):
@@ -65,15 +69,15 @@ def get_image_from_webcam(config, picture):
             with urllib.request.urlopen(url, None, 10) as response:
                 with open(picture, 'wb') as out_file:
                     shutil.copyfileobj(response, out_file)
-            got_image = 1
+            got_image = True
         except RemoteDisconnected as http_error:   # RemoteDisconnected as discerr:
             logger.error("HTTPError %s", http_error)
-            got_image = 0
+            got_image = False
         except urllib.error.URLError as url_error:
             logger.error("URLError %s", url_error)
-            got_image = 0
+            got_image = False
 
-        if got_image == 1:
+        if got_image:
             logger.info("got image at try %s", trycount)
             break
     return got_image
@@ -115,7 +119,7 @@ def annotate_image(picture, picture_annotated,
     im_crop.save(picture_annotated)
 
 def send_image_to_webpage(config,
-                         filename, picture_annotated):
+                         picture_annotated):
     '''use ftp to send image to web'''
     session_is_open = 0
     session = ""
@@ -131,6 +135,9 @@ def send_image_to_webpage(config,
             session.cwd(formatted_subdir)
         # mylist = session.nlst()
 
+        filename = config.get('filename')
+        if "%" in filename:
+            filename = (datetime.strftime(datetime.now(), filename))
         file = open(picture_annotated, 'rb')
         session.storbinary('STOR ' + filename + '.tmp', file)
         file.close()

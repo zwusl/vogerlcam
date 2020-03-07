@@ -23,7 +23,6 @@ __updated__ = '2020-03-07'
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 import configparser
-from datetime import datetime
 from os import listdir, rename
 from os.path import isfile, join
 import sys
@@ -116,8 +115,8 @@ USAGE
         config.read(configfile)
 
         local_config = config['DEFAULT']
-        picture = local_config.get('picture_arch', 'archive.jpeg')
-        picture_annotated = local_config.get('picture_arch_annotated',
+        image_file = local_config.get('image_arch', 'archive.jpeg')
+        image_file_annotated = local_config.get('image_arch_annotated',
                                              'archive_crop.jpeg')
         retrydir = local_config.get('retrydir',
                                     '/home/werner/'
@@ -125,26 +124,22 @@ USAGE
 
         logger.info("get image from cam")
 
-        if tools.get_image_from_webcam(config['WEBCAM'],
-                                       picture) == 0:
+        if not tools.get_image_from_webcam(config['WEBCAM'],
+                                       image_file):
             logger.critical("giving up, did not get an image from cam")
             sys.exit()
 
         logger.info("crop an annotate image")
 
-        tools.annotate_image(picture, picture_annotated, 0, 1)
+        tools.annotate_image(image_file, image_file_annotated, 0, 1)
 
         logger.info("send image to Webpage")
 
-        filename = (datetime.strftime(datetime.now(), "%Y-%m-%d--%H-%M-%S")
-                    + '_sm.jpg')
-
         session_is_open = 0
-
 
         (session_is_open, session) = tools.send_image_to_webpage(
             config['FTPARCH'],
-            filename, picture_annotated)
+            image_file_annotated)
 
         if session_is_open == 1:
             files = [fil for fil in listdir(retrydir)

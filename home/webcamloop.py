@@ -18,7 +18,7 @@ see configuration file
 __all__ = []
 __version__ = 0.1
 __date__ = '2020-02-21'
-__updated__ = '2020-03-01'
+__updated__ = '2020-03-07'
 
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
@@ -26,7 +26,6 @@ import configparser
 import sys
 import logging
 import time
-
 
 from helpers import tools
 
@@ -83,7 +82,7 @@ USAGE
     try:
         # Setup argument parser
         parser = ArgumentParser(description=program_license,
-                                formatter_class=RawDescriptionHelpFormatter)
+                            formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-v", "--verbose", dest="verbose",
                             action="count",
                             help="set verbosity level "
@@ -108,33 +107,33 @@ USAGE
         config.read(configfile)
 
         local_config = config['DEFAULT']
-        picture = local_config.get('picture_loop', 'loop.jpeg')
-        picture_annotated = local_config.get('picture_loop_annotated',
+        image_file = local_config.get('image_loop', 'loop.jpeg')
+        image_file_annotated = local_config.get('image_loop_annotated',
                                              'loop_annotated.jpeg')
         while True:
 
             logger.info("get image from cam")
 
-            if tools.get_image_from_webcam(config['WEBCAM'],
-                                           picture) == 0:
-                logger.critical("giving up, did not get an image from cam")
+            if not tools.get_image_from_webcam(config['WEBCAM'],
+                                           image_file):
+                logger.critical(
+                    "giving up, did not get an image from cam")
                 time.sleep(4)
                 continue
 
-            logger.info("crop an annotate image %s %s",
-                        picture, picture_annotated)
+            logger.info("crop and annotate image %s %s",
+                        image_file, image_file_annotated)
 
-            tools.annotate_image(picture, picture_annotated, True)
+            tools.annotate_image(image_file, image_file_annotated,
+                                 True)
 
             logger.info("send image to Webpage")
-
-            filename = 'webcam_0' + '.jpeg'
 
             session_is_open = 0
 
             (session_is_open, session) = tools.send_image_to_webpage(
                 config['FTPLOOP'],
-                filename, picture_annotated)
+                image_file_annotated)
 
             if session_is_open == 1:
                 session.quit()
@@ -142,12 +141,13 @@ USAGE
             time.sleep(4)
             for cnt in range(74):
                 logger.info("in loop %s", cnt)
-                logger.info("semaphore: %s",config['SEMAPHORE']['last_visit_url'])
-                mywait = tools.get_last_visit(config['SEMAPHORE']['last_visit_url'])
-                if mywait == 60:
-                    time.sleep(4)
-                else:
+                logger.info(
+                    "semaphore: %s",
+                    config['SEMAPHORE']['last_visit_url'])
+                if tools.is_there_anybody_out_there(
+                        config['SEMAPHORE']['last_visit_url']):
                     break
+                time.sleep(4)
 
     except KeyboardInterrupt:
         # handle keyboard interrupt #
