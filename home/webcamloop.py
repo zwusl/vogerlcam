@@ -129,14 +129,9 @@ USAGE
 
             logger.info("send image to Webpage")
 
-            session_is_open = 0
-
-            (session_is_open, session) = tools.send_image_to_webpage(
+            tools.send_image_to_webpage(
                 config['FTPLOOP'],
                 image_file_annotated)
-
-            if session_is_open == 1:
-                session.quit()
 
             time.sleep(4)
             for cnt in range(74):

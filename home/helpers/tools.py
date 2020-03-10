@@ -6,8 +6,8 @@ Created on 22.02.2020
 
 from datetime import datetime
 import ftplib
-from os import rename
-from os.path import join
+from os import listdir, rename
+from os.path import isfile, join
 import shutil
 import socket
 import urllib.request
@@ -127,13 +127,10 @@ def send_image_to_webpage(config, picture_annotated):
         session = ftplib.FTP(config.get('server'), config.get('user'),
                              config.get('password'), timeout=10)
         session_is_open = 1
-        session.cwd(config.get('dir'))
 
-        if config.get('subdir') != '':
-            formatted_subdir = datetime.strftime(datetime.now(),
-                                                 config.get('subdir'))
-            create_missing_dir(session, formatted_subdir)
-            session.cwd(formatted_subdir)
+        change_to_target_dir(session, config.get('dir'),
+                             config.get('subdir'))
+
         # mylist = session.nlst()
 
         filename = config.get('filename')
@@ -154,31 +151,37 @@ def send_image_to_webpage(config, picture_annotated):
                join(config.get('retrydir'), filename))
         logger.error("ftp error %s ", ftp_error)
 
-    return (session_is_open, session)
+    if session_is_open == 1:
+        try:
+            retrydir = config.get('retrydir')
+            files = [fil for fil in listdir(retrydir)
+                     if (isfile(join(retrydir, fil))
+                         and fil.endswith('_sm.jpg'))]
+            if not files:
+                session.quit()
+            else:
+                for file in files:
 
+                    change_to_target_dir(session, config.get('dir'),
+                                         config.get('subdir'))
 
-def send_image_to_webpage_wos(config, session, filename):
-    '''use ftp with open session'''
-    success = 0
-    try:
-        session.cwd(config.get('dir'))
+                    filehandler = open(join(retrydir, file), 'rb')
+                    session.storbinary('STOR ' + file, filehandler)
+                    filehandler.close()
 
-        if config.get('subdir') != '':
-            formatted_subdir = datetime.strftime(datetime.now(),
-                                                 config.get('subdir'))
-            create_missing_dir(session, formatted_subdir)
-            session.cwd(formatted_subdir)
+                    rename(join(retrydir, file),
+                           join(retrydir, file) + 'xxx')
 
-        filehandler = open(join(config.get('retrydir'), filename), 'rb')
-        session.storbinary('STOR ' + filename, filehandler)
-        filehandler.close()
-        success = 1
-    except socket.timeout as sock_error:
-        logger.error("sock error %s ", sock_error)
-    except ftplib.all_errors as ftp_error:
-        logger.error("ftp error %s ", ftp_error)
+                session.quit()
+        except socket.timeout as sock_error:
+            logger.error("sock error %s ", sock_error)
+        except ftplib.all_errors as ftp_error:
+            logger.error("ftp error %s ", ftp_error)
 
-    return success
+    else:
+        session.quit()
+
+    return session_is_open
 
 
 def create_missing_dir(session, dir_to_check):
@@ -212,3 +215,13 @@ def create_missing_dir(session, dir_to_check):
             logger.debug("folder does not exitst, ftp.mkd: %s", dir_to_check)
         else:
             logger.debug("folder did exist: %s", dir_to_check)
+
+def change_to_target_dir(session, cwddir, subdir):
+    '''change dir'''
+    session.cwd(cwddir)
+
+    if subdir != '':
+        formatted_subdir = datetime.strftime(datetime.now(),
+                                             subdir)
+        create_missing_dir(session, formatted_subdir)
+        session.cwd(formatted_subdir)

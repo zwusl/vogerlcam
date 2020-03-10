@@ -23,8 +23,6 @@ __updated__ = '2020-03-07'
 from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 import configparser
-from os import listdir, rename
-from os.path import isfile, join
 import sys
 import logging
 
@@ -118,9 +116,6 @@ USAGE
         image_file = local_config.get('image_arch', 'archive.jpeg')
         image_file_annotated = local_config.get('image_arch_annotated',
                                                 'archive_crop.jpeg')
-        retrydir = local_config.get('retrydir',
-                                    '/home/werner/'
-                                    'Dokumente/webcam/retry')
 
         logger.info("get image from cam")
 
@@ -135,26 +130,12 @@ USAGE
 
         logger.info("send image to Webpage")
 
-        session_is_open = 0
-
-        (session_is_open, session) = tools.send_image_to_webpage(
+        tools.send_image_to_webpage(
             config['FTPARCH'],
             image_file_annotated)
+        
+        return 1
 
-        if session_is_open == 1:
-            files = [fil for fil in listdir(retrydir)
-                     if (isfile(join(retrydir, fil))
-                         and fil.endswith('_sm.jpg'))]
-            if not files:
-                session.quit()
-            else:
-                for file in files:
-                    if tools.send_image_to_webpage_wos(config['FTPARCH'],
-                                                       session, file):
-                        rename(join(retrydir, file),
-                               join(retrydir, file) + 'xxx')
-                session.quit()
-        return 0
     except KeyboardInterrupt:
         # handle keyboard interrupt #
         return 0
