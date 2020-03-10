@@ -83,10 +83,10 @@ def get_image_from_webcam(config, picture):
     return got_image
 
 
-def annotate_image(picture, picture_annotated,
+def annotate_image(image_file, image_file_annotated,
                    do_crop=False, do_resize=False):
     '''draw timestamp on image'''
-    image_from_picture = Image.open(picture)
+    image_object = Image.open(image_file)
 
     if do_crop:
         logger.info("do_crop")
@@ -94,11 +94,11 @@ def annotate_image(picture, picture_annotated,
         upper = 400
         right = left + 1140
         lower = 1000
-        im_crop = image_from_picture.crop((left, upper, right, lower))
+        im_crop = image_object.crop((left, upper, right, lower))
         font_size = 18
     else:
         logger.info("no crop")
-        im_crop = image_from_picture
+        im_crop = image_object
         font_size = 18
 
     if do_resize:
@@ -116,13 +116,16 @@ def annotate_image(picture, picture_annotated,
     draw.text((11, 11), anno_time, fill='#000000', font=font)
     draw.text((10, 10), anno_time, fill='#A0A0F0', font=font)
 
-    im_crop.save(picture_annotated)
+    im_crop.save(image_file_annotated)
 
 
-def send_image_to_webpage(config, picture_annotated):
+def send_image_to_webpage(config, image_file_annotated):
     '''use ftp to send image to web'''
     session_is_open = 0
     session = ""
+    filename = config.get('filename')
+    if "%" in filename:
+        filename = (datetime.strftime(datetime.now(), filename))
     try:
         session = ftplib.FTP(config.get('server'), config.get('user'),
                              config.get('password'), timeout=10)
@@ -133,55 +136,60 @@ def send_image_to_webpage(config, picture_annotated):
 
         # mylist = session.nlst()
 
-        filename = config.get('filename')
-        if "%" in filename:
-            filename = (datetime.strftime(datetime.now(), filename))
-        file = open(picture_annotated, 'rb')
-        session.storbinary('STOR ' + filename + '.tmp', file)
-        file.close()
-        session.rename(filename + '.tmp', filename)
+        store_ftp(session, image_file_annotated, filename)
+
     except socket.timeout as sock_error:
         session_is_open = 0
-        rename(picture_annotated,
+        rename(image_file_annotated,
                join(config.get('retrydir'), filename))
         logger.error("sock error %s ", sock_error)
     except ftplib.all_errors as ftp_error:
         session_is_open = 0
-        rename(picture_annotated,
+        rename(image_file_annotated,
                join(config.get('retrydir'), filename))
         logger.error("ftp error %s ", ftp_error)
 
     if session_is_open == 1:
-        try:
-            retrydir = config.get('retrydir')
-            files = [fil for fil in listdir(retrydir)
-                     if (isfile(join(retrydir, fil))
-                         and fil.endswith('_sm.jpg'))]
-            if not files:
-                session.quit()
-            else:
-                for file in files:
+        retrydir = config.get('retrydir')
+        if retrydir == "":
+            session.quit()
+        else:
+            logger.info("retry sending files")
+            try:
 
-                    change_to_target_dir(session, config.get('dir'),
-                                         config.get('subdir'))
+                files = [fil for fil in listdir(retrydir)
+                         if (isfile(join(retrydir, fil))
+                             and fil.endswith('_sm.jpg'))]
+                if not files:
+                    logger.info("no files to retry in %s", retrydir)
+                    session.quit()
+                else:
+                    for file_name in files:
 
-                    filehandler = open(join(retrydir, file), 'rb')
-                    session.storbinary('STOR ' + file, filehandler)
-                    filehandler.close()
+                        logger.info("retry sending %s", file_name)
+                        change_to_target_dir(session, config.get('dir'),
+                                             config.get('subdir'))
 
-                    rename(join(retrydir, file),
-                           join(retrydir, file) + 'xxx')
+                        store_ftp(session, join(retrydir, file_name), file_name)
 
-                session.quit()
-        except socket.timeout as sock_error:
-            logger.error("sock error %s ", sock_error)
-        except ftplib.all_errors as ftp_error:
-            logger.error("ftp error %s ", ftp_error)
+                        rename(join(retrydir, file_name),
+                               join(retrydir, file_name) + 'xxx')
 
-    else:
-        session.quit()
+                    session.quit()
+            except socket.timeout as sock_error:
+                logger.error("sock error %s ", sock_error)
+            #except ftplib.all_errors as ftp_error:
+            #    logger.error("ftp error %s ", ftp_error)
 
     return session_is_open
+
+
+def store_ftp(session, full_name, save_as):
+    '''store in ftp'''
+    file_handler = open(full_name, 'rb')
+    session.storbinary('STOR ' + save_as + '.tmp', file_handler)
+    file_handler.close()
+    session.rename(save_as + '.tmp', save_as)
 
 
 def create_missing_dir(session, dir_to_check):

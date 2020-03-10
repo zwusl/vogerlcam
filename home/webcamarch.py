@@ -133,7 +133,7 @@ USAGE
         tools.send_image_to_webpage(
             config['FTPARCH'],
             image_file_annotated)
-        
+
         return 1
 
     except KeyboardInterrupt:
