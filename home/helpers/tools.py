@@ -38,6 +38,7 @@ def is_there_anybody_out_there(config):
     except ValueError as value_error:
         logger.error("last visit ValueError %s", str(value_error))
         return False
+
     mynow = datetime.strftime(datetime.now(), last_visit_format)
 
     we_have_a_visitor = abs(
@@ -48,8 +49,8 @@ def is_there_anybody_out_there(config):
     return we_have_a_visitor
 
 
-def get_image_from_webcam(config, picture):
-    '''get image from webcam and store it in picture'''
+def get_image_from_webcam(config, image_file):
+    '''get image from webcam and store it in image_file'''
 
     url = config.get('url')
     passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
@@ -67,7 +68,7 @@ def get_image_from_webcam(config, picture):
 
         try:
             with urllib.request.urlopen(url, None, 10) as response:
-                with open(picture, 'wb') as out_file:
+                with open(image_file, 'wb') as out_file:
                     shutil.copyfileobj(response, out_file)
             got_image = True
         except RemoteDisconnected as http_error:
@@ -95,20 +96,19 @@ def annotate_image(image_file, image_file_annotated,
         right = left + 1140
         lower = 1000
         im_crop = image_object.crop((left, upper, right, lower))
-        font_size = 18
     else:
         logger.info("no crop")
         im_crop = image_object
-        font_size = 18
 
     if do_resize:
-        font_size = 18
+        logger.info("do_resize")
         size = 1140, 1140
         try:
             im_crop.thumbnail(size, Image.ANTIALIAS)
         except IOError:
             logger.error("cannot resize image")
 
+    font_size = 18
     draw = ImageDraw.Draw(im_crop)
     font = ImageFont.truetype("Vera.ttf", font_size, encoding="unic")
     anno_time = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
@@ -121,75 +121,97 @@ def annotate_image(image_file, image_file_annotated,
 
 def send_image_to_webpage(config, image_file_annotated):
     '''use ftp to send image to web'''
-    session_is_open = 0
+    session_is_open = False
     session = ""
+    an_error_happened = False
     filename = config.get('filename')
     if "%" in filename:
         filename = (datetime.strftime(datetime.now(), filename))
     try:
         session = ftplib.FTP(config.get('server'), config.get('user'),
                              config.get('password'), timeout=10)
-        session_is_open = 1
-
-        change_to_target_dir(session, config.get('dir'),
-                             config.get('subdir'))
+        session_is_open = True
 
         # mylist = session.nlst()
 
-        store_ftp(session, image_file_annotated, filename)
+        store_ftp(session, config, image_file_annotated, filename)
 
     except socket.timeout as sock_error:
-        session_is_open = 0
-        rename(image_file_annotated,
-               join(config.get('retrydir'), filename))
+        an_error_happened = True
         logger.error("sock error %s ", sock_error)
     except ftplib.all_errors as ftp_error:
-        session_is_open = 0
-        rename(image_file_annotated,
-               join(config.get('retrydir'), filename))
+        an_error_happened = True
         logger.error("ftp error %s ", ftp_error)
 
-    if session_is_open == 1:
+    if an_error_happened:
+        if session_is_open:
+            session.quit()
+        if config.get('retrydir') != "":
+            rename(image_file_annotated,
+                   join(config.get('retrydir'), filename))
+    else:
         retrydir = config.get('retrydir')
         if retrydir == "":
-            session.quit()
+            if session_is_open:
+                session.quit()
         else:
             logger.info("retry sending files")
-            try:
-
-                files = [fil for fil in listdir(retrydir)
-                         if (isfile(join(retrydir, fil))
-                             and fil.endswith('_sm.jpg'))]
-                if not files:
-                    logger.info("no files to retry in %s", retrydir)
-                    session.quit()
-                else:
-                    for file_name in files:
-
-                        logger.info("retry sending %s", file_name)
-                        change_to_target_dir(session, config.get('dir'),
-                                             config.get('subdir'))
-
-                        store_ftp(session, join(retrydir, file_name), file_name)
-
-                        rename(join(retrydir, file_name),
-                               join(retrydir, file_name) + 'xxx')
-
-                    session.quit()
-            except socket.timeout as sock_error:
-                logger.error("sock error %s ", sock_error)
-            #except ftplib.all_errors as ftp_error:
-            #    logger.error("ftp error %s ", ftp_error)
+            retry_sending(session, config)
 
     return session_is_open
 
 
-def store_ftp(session, full_name, save_as):
+def retry_sending(session, config):
+    '''retry'''
+    try:
+        retrydir = config.get('retrydir')
+
+        files = [fil for fil in listdir(retrydir)
+                 if (isfile(join(retrydir, fil))
+                     and fil.endswith('_sm.jpg'))]
+        if not files:
+            logger.info("no files to retry in %s", retrydir)
+            session.quit()
+        else:
+            for filename in files:
+
+                logger.info("retry sending %s", filename)
+
+                store_ftp(session, config,
+                          join(retrydir, filename),
+                          filename)
+
+                rename(join(retrydir, filename),
+                       join(retrydir, filename) + 'xxx')
+
+            session.quit()
+    except socket.timeout as sock_error:
+        logger.error("sock error %s ", sock_error)
+    except ftplib.all_errors as ftp_error:
+        logger.error("ftp error %s ", ftp_error)
+
+
+
+def store_ftp(session, config, full_name, save_as):
     '''store in ftp'''
+
+    change_to_target_dir(session, config.get('dir'), config.get('subdir'))
+
     file_handler = open(full_name, 'rb')
     session.storbinary('STOR ' + save_as + '.tmp', file_handler)
     file_handler.close()
     session.rename(save_as + '.tmp', save_as)
+
+
+def change_to_target_dir(session, cwddir, subdir):
+    '''change dir'''
+    session.cwd(cwddir)
+
+    if subdir != '':
+        formatted_subdir = datetime.strftime(datetime.now(),
+                                             subdir)
+        create_missing_dir(session, formatted_subdir)
+        session.cwd(formatted_subdir)
 
 
 def create_missing_dir(session, dir_to_check):
@@ -223,13 +245,3 @@ def create_missing_dir(session, dir_to_check):
             logger.debug("folder does not exitst, ftp.mkd: %s", dir_to_check)
         else:
             logger.debug("folder did exist: %s", dir_to_check)
-
-def change_to_target_dir(session, cwddir, subdir):
-    '''change dir'''
-    session.cwd(cwddir)
-
-    if subdir != '':
-        formatted_subdir = datetime.strftime(datetime.now(),
-                                             subdir)
-        create_missing_dir(session, formatted_subdir)
-        session.cwd(formatted_subdir)

@@ -125,7 +125,7 @@ USAGE
                         image_file, image_file_annotated)
 
             tools.annotate_image(image_file, image_file_annotated,
-                                 True)
+                                 do_crop=True)
 
             logger.info("send image to Webpage")
 

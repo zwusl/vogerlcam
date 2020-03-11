@@ -126,7 +126,7 @@ USAGE
 
         logger.info("crop an annotate image")
 
-        tools.annotate_image(image_file, image_file_annotated, 0, 1)
+        tools.annotate_image(image_file, image_file_annotated, do_resize=True)
 
         logger.info("send image to Webpage")
 
