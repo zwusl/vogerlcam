@@ -208,10 +208,14 @@ def change_to_target_dir(session, cwddir, subdir):
     session.cwd(cwddir)
 
     if subdir != '':
-        formatted_subdir = datetime.strftime(datetime.now(),
-                                             subdir)
-        create_missing_dir(session, formatted_subdir)
-        session.cwd(formatted_subdir)
+        split_subdir = subdir.split("-")
+        for split_count in range(0, len(split_subdir)):
+            sublevel = "-".join(split_subdir[0:split_count + 1])
+            formatted_sublevel = datetime.strftime(datetime.now(),
+                                                   sublevel)
+            create_missing_dir(session, formatted_sublevel)
+            logger.debug("changing to dir: %s", formatted_sublevel)
+            session.cwd(formatted_sublevel)
 
 
 def create_missing_dir(session, dir_to_check):
