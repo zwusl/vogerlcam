@@ -1,5 +1,8 @@
 $(document).ready(function(){
     
+$( document ).on( "mobileinit", function() {
+    $.mobile.loader.prototype.options.disabled = true;
+});
 
     $(".navigate").click(function(){
     
@@ -44,6 +47,12 @@ $(document).ready(function(){
         else if(e.keyCode == 40) { // down
             action = "ni";
         }
+        else if(e.keyCode == 33) { // page up
+            action = "pq";
+        }
+        else if(e.keyCode == 34) { // page down
+            action = "nq";
+        }
         $.getJSON( "/webcam/timewarp2.py", {current: cur, action: action, uhrzeit: uhrzeit}, function( data ) {
             var items = [];
             $.each( data, function( key, val ) {
@@ -59,9 +68,61 @@ $(document).ready(function(){
         
     });
 
+$('.currentimg').on("swiperight",function(){
+    var action;
+    action = "pq";
+
+    var cur = document.getElementsByClassName('current')[0].innerHTML;
+
+                
+    var uhrzeit = document.getElementsByClassName('uhrzeit')[0].innerHTML;
+    
+
+    $.getJSON( "/webcam/timewarp2.py", {current: cur, action: action, uhrzeit: uhrzeit}, function( data ) {
+        var items = [];
+        $.each( data, function( key, val ) {
+            //items.push(key + "xxx" + val + "<br>");
+            items.push(val);
+        });
+        $(".current").html(items[0]);
+        $(".uhrzeit").html(items[1]);
+        $(".currentimg").attr("src",items[0]);
+
+        //$( "body" ).append( items );
+    });
+
+});
 
 
-    $('.currentimg').click(function(e) {
+$('.currentimg').on("swipeleft",function(){
+    var action;
+    action = "nq";
+
+    var cur = document.getElementsByClassName('current')[0].innerHTML;
+
+                
+    var uhrzeit = document.getElementsByClassName('uhrzeit')[0].innerHTML;
+    
+
+    $.getJSON( "/webcam/timewarp2.py", {current: cur, action: action, uhrzeit: uhrzeit}, function( data ) {
+        var items = [];
+        $.each( data, function( key, val ) {
+            //items.push(key + "xxx" + val + "<br>");
+            items.push(val);
+        });
+        $(".current").html(items[0]);
+        $(".uhrzeit").html(items[1]);
+        $(".currentimg").attr("src",items[0]);
+
+        //$( "body" ).append( items );
+    });
+
+    
+    
+});
+
+    //$('.currentimg').click(function(e) {
+    $('.currentimg').on('dblclick click',function(e){
     var offset = $(this).offset();
     var x = e.pageX - offset.left;
     var y = e.pageY - offset.top;
@@ -88,11 +149,26 @@ $(document).ready(function(){
     }
     else if (x<(width/2))
     {
-        action = "pd";
+        if (e.type == "click")
+        {
+            action = "pd";
+        }
+        else
+        {
+            action = "pq";
+        }
+
     }
     else
     {
-        action = "nd";
+        if (e.type == "click")
+        {
+            action = "nd";
+        }
+        else
+        {
+            action = "nq";
+        }
     }
 
     var cur = document.getElementsByClassName('current')[0].innerHTML;
@@ -117,6 +193,7 @@ $(document).ready(function(){
 
   });
     
+
 
 });
       

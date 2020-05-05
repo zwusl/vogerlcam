@@ -5,32 +5,33 @@
 #print("Content-Type: text/html")    # HTML is following
 #print("")                             # blank line, end of headers
 
-import os
-import glob
-import datetime
-import json
 import cgi
 import cgitb; cgitb.enable()
 
+import glob, os
+
+import datetime
+
+import json
+    
 
 
 def header():
-    '''header'''
-    print("Content-Type: application/json;charset=iso-8859-1")
-    #   print "Content-Type: text/html;charset=iso-8859-1"
-    print("")
+   print "Content-Type: application/json;charset=iso-8859-1"
+#   print "Content-Type: text/html;charset=iso-8859-1"
+   print ""
 
 
 def nextimage(mymodus,mydir,mycurrent,myuhrzeit):
 
-    myfiles = glob.glob(mydir + "/*_sm.jpg")
+    myfiles = glob.glob(mydir + "/*.jpeg")
 
     if mymodus != "nearest":
         myfiles.sort()
-    
+        
         myindex = myfiles.index(mycurrent) if mycurrent in myfiles else None
 
-        if myindex is not None:
+        if myindex != None:
             if mymodus == "next" and myindex < (len(myfiles)-1):
                 mynext = myfiles[myindex + 1]
             elif mymodus == "previous" and myindex > 0:
@@ -41,41 +42,108 @@ def nextimage(mymodus,mydir,mycurrent,myuhrzeit):
             mynext = nextday(myaction,mycurrent,myuhrzeit)
     else:
         mytarget = datetime.datetime.strptime(myuhrzeit,"%H-%M-%S")
-        mynext = min(myfiles,
-                     key=lambda myx: abs(datetime.datetime.strptime(myx[-13:-5],
-                                                                    "%H-%M-%S") - mytarget))
-
-    return mynext
+        mynext = min(myfiles, key=lambda myx: abs(datetime.datetime.strptime(myx[-13:-5],"%H-%M-%S") - mytarget))
+    
+    return mynext    
 
 
 def nextday(myaction,mycurrent,myuhrzeit):
-    mydir1 = os.path.dirname(mycurrent)
-    mydir2 = os.path.dirname(mydir1)
+    
+    mydird = os.path.dirname(mycurrent)
+    #../../webcamarchive_y-m-d/2020/2020-05/2020-05-01/2020-05-01--13-00-03.jpeg
 
-    mydirlist = [(mydir2 + "/" + filename) for filename in os.listdir(mydir2)
-                 if os.path.isdir(os.path.join(mydir2,filename))]
-    mydirlist.sort()
+    
+    mydirm = os.path.dirname(mydird)
+    mydiry = os.path.dirname(mydirm)
+    mydir0 = os.path.dirname(mydiry)
+    current_day = os.path.basename(mydird)
 
-    mynextdir = ""
-    myindex = mydirlist.index(mydir1)
-    if myaction[0] == "n" and myindex < (len(mydirlist)-1):
-        mynextdir = mydirlist[myindex+1]
-    elif myaction[0] == "p" and myindex > 0:
-        mynextdir = mydirlist[myindex-1]
 
-    if mynextdir != "":
+
+    move_to_day = datetime.datetime.strptime(current_day, "%Y-%m-%d")
+
+
+    at_the_end = False
+
+    if myaction[0] == "n":
+        sign = 1
+    else:
+        sign = -1
+    if myaction[1] == "q":
+        delta = 42
+    else:
+        delta = 1
+    
+    cnt = 0
+    while 1:
+        cnt = cnt + 1
+        if cnt>50:
+            at_the_end = True
+            break
+        #myfilename = "./cam1/visited/lb3.txt" #+ timestampStr
+        #myfile = open(myfilename,"a") 
+        #myfile.write(current_day + " " + datetime.datetime.strftime(move_to_day, "%Y-%m-%d") + "\n")
+        #myfile.close() 
+
+        move_to_day = move_to_day + datetime.timedelta(days=(delta*sign))
+        delta = 1
+        
+        if move_to_day>datetime.datetime.now():
+            at_the_end = True
+            break
+
+        if move_to_day<datetime.datetime.strptime("2018-12-14","%Y-%m-%d"):
+            at_the_end = True
+            break
+
+        newy = datetime.datetime.strftime(move_to_day,"%Y")
+        newm = datetime.datetime.strftime(move_to_day,"%Y-%m")
+        newd = datetime.datetime.strftime(move_to_day,"%Y-%m-%d")
+        
+        if not os.path.exists(os.path.join(mydir0, newy)):
+            at_the_end = True
+            break
+
+        mynextdir = os.path.join(mydir0, newy, newm, newd)
+
+        if os.path.exists(mynextdir):
+            break
+
+
+
+    if at_the_end == True:
+        mynearest = mycurrent
+    else:
         if myaction[1] == "i":
             if myaction == "pi":
                 myuhrzeit = "23-59-59"
             else:
                 myuhrzeit = "00-00-00"
+
+
         mynearest = nextimage("nearest",mynextdir,mycurrent,myuhrzeit)
-    else:
-        mynearest = mycurrent
-
-    return mynearest
-
-
+            
+    #mydirlist = [(mydir2 + "/" + filename) for filename in os.listdir(mydir2) if os.path.isdir(os.path.join(mydir2,filename))]
+    #mydirlist.sort()
+    
+    #mynextdir = ""
+    #myindex = mydirlist.index(mydir1)
+    #if myaction[0] == "n" and myindex < (len(mydirlist)-1):
+    #    mynextdir = mydirlist[myindex+1];
+    #elif myaction[0] == "p" and myindex > 0:
+    #    mynextdir = mydirlist[myindex-1]
+    #    
+    #if mynextdir != "":
+    #    if myaction[1] == "i":
+    #        if myaction == "pi":
+    #            myuhrzeit = "23-59-59"
+    #        else:
+    #            myuhrzeit = "00-00-00"
+    #    mynearest = nextimage("nearest",mynextdir,mycurrent,myuhrzeit)
+    #else:
+    #    mynearest = mycurrent
+    
+    return mynearest    
 
 
 header()
@@ -106,20 +174,19 @@ if myaction[1] == "i" :
 else:
     mynext = nextday(myaction,mycurrent,myuhrzeit)
     myfound.append(mynext.replace("../","../../"))
-    myfound.append(myuhrzeit)
+    myfound.append(myuhrzeit)    
 
 dateTimeObj = datetime.datetime.now()
  
 timestampStr = dateTimeObj.strftime("%Y-%m-%d--%H-%M-%S")
  
 #myfilename = "/home/xnfrxkas/public_html/webcam/cam1/visited/" + timestampStr
-myfilename = "./cam1/visited/lb.txt" #+ timestampStr
-myfile = open(myfilename,"w") 
-
-myfile.write(timestampStr)
-
-myfile.close()
+#myfilename = "./cam1/visited/lb.txt" #+ timestampStr
+#myfile = open(myfilename,"w") 
+#myfile.write(timestampStr)
+#myfile.close() 
 
 json_string=json.dumps(myfound)
+    
+print json_string
 
-print(json_string)
