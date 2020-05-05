@@ -42,7 +42,7 @@ def nextimage(mymodus,mydir,mycurrent,myuhrzeit):
     else:
         mytarget = datetime.datetime.strptime(myuhrzeit,"%H-%M-%S")
         mynext = min(myfiles,
-                     key=lambda myx: abs(datetime.datetime.strptime(myx[-15:-7],
+                     key=lambda myx: abs(datetime.datetime.strptime(myx[-13:-5],
                                                                     "%H-%M-%S") - mytarget))
 
     return mynext
@@ -100,7 +100,7 @@ if myaction[1] == "i" :
     mynext = nextimage(mymodus,mydir1,mycurrent,myuhrzeit)
 
     myfound.append(mynext.replace("../","../../"))
-    myuhrzeit = mynext[-15:-7]
+    myuhrzeit = mynext[-13:-5]
     myfound.append(myuhrzeit)
 
 else:

@@ -2,9 +2,13 @@
 
 $heute = date("Y-m-d");
 //$dirs = array_filter(glob('/home/xnfrxkas/public_html/webcamarchive/*'), 'is_dir');
-$dirs = array_filter(glob('../www/webcamarchive2/*'), 'is_dir');
-$last = end($dirs);
-$files = glob($last . '/*_sm.jpg');
+$dirs = array_filter(glob('../www/webcamarchive_y-m-d/*'), 'is_dir');
+$lasty = end($dirs);
+$dirs = array_filter(glob($lasty .'/*'), 'is_dir');
+$lastm = end($dirs);
+$dirs = array_filter(glob($lastm .'/*'), 'is_dir');
+$lastd = end($dirs);
+$files = glob($lastd . '/*.jpeg');
 //$files = glob($last . '/*');
 foreach($files as $file) {
    $erstes = $file;
@@ -13,11 +17,11 @@ foreach($files as $file) {
 }
 
 //echo date("Y-m-d--H-i-s");
-//echo "../webcamarchive/2018-12-27/2018-12-27--08-30-01_lg.jpg";
+//echo "../webcamarchive/2018-12-27/2018-12-27--08-30-01.jpeg";
 echo $erstes;
 ?></span>&nbsp;<span class="uhrzeit"><?php
 
-echo substr($erstes,-15,8);
+echo substr($erstes,-13,8);
 
 ?></span>
 
@@ -36,4 +40,6 @@ echo '<img class="currentimg" src="' . $erstes . '">';
 <button class="navigate" id="ni" name="ni" value="ni">next image</button>
 
 <button class="navigate" id="nd" name="nd" value="nd">next day</button>
+
+
 
