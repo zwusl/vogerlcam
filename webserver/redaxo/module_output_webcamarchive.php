@@ -33,6 +33,8 @@ echo '<img class="currentimg" src="' . $erstes . '">';
 
 ?>
 <br>
+<button class="navigate" id="pq" name="pq" value="pq">42 days back</button>
+
 <button class="navigate" id="pd" name="pd" value="pd">previous day</button>
 
 <button class="navigate" id="pi" name="pi" value="pi">previous image</button>
@@ -41,5 +43,6 @@ echo '<img class="currentimg" src="' . $erstes . '">';
 
 <button class="navigate" id="nd" name="nd" value="nd">next day</button>
 
+<button class="navigate" id="nq" name="nq" value="nq">42 days forward</button>
 
 
