@@ -17,9 +17,9 @@ import json
 
 
 def header():
-   print "Content-Type: application/json;charset=iso-8859-1"
+    print "Content-Type: application/json;charset=iso-8859-1"
 #   print "Content-Type: text/html;charset=iso-8859-1"
-   print ""
+    print ""
 
 
 def nextimage(mymodus,mydir,mycurrent,myuhrzeit):
