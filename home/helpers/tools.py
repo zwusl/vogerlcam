@@ -168,7 +168,7 @@ def retry_sending(session, config):
 
         files = [fil for fil in listdir(retrydir)
                  if (isfile(join(retrydir, fil))
-                     and fil.endswith('_sm.jpg'))]
+                     and fil.endswith('.jpeg'))]
         if not files:
             logger.info("no files to retry in %s", retrydir)
             session.quit()
@@ -211,8 +211,7 @@ def change_to_target_dir(session, cwddir, subdir):
         split_subdir = subdir.split("-")
         for split_count in range(0, len(split_subdir)):
             sublevel = "-".join(split_subdir[0:split_count + 1])
-            formatted_sublevel = datetime.strftime(datetime.now(),
-                                                   sublevel)
+            formatted_sublevel = datetime.strftime(datetime.now(),                    sublevel)
             create_missing_dir(session, formatted_sublevel)
             logger.debug("changing to dir: %s", formatted_sublevel)
             session.cwd(formatted_sublevel)
