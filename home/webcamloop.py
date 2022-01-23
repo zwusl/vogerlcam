@@ -81,8 +81,7 @@ USAGE
 
     try:
         # Setup argument parser
-        parser = ArgumentParser(description=program_license,
-                                formatter_class=RawDescriptionHelpFormatter)
+        parser = ArgumentParser(description=program_license,  formatter_class=RawDescriptionHelpFormatter)
         parser.add_argument("-v", "--verbose", dest="verbose",
                             action="count",
                             help="set verbosity level "
@@ -127,7 +126,7 @@ USAGE
             tools.annotate_image(image_file, image_file_annotated,
                                  do_crop=True)
 
-            logger.info("send image to Webpage")
+            logger.info("send image to Webpage") 
 
             tools.send_image_to_webpage(
                 config['FTPLOOP'],
