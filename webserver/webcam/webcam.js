@@ -1,6 +1,5 @@
 $(document).ready(function(){
 
-    
 
 /*
     $.getJSON( "/webcam/checkreload.py", {uhrzeit: uhrzeit}, function( data ) {
@@ -15,9 +14,6 @@ $(document).ready(function(){
         //$( "body" ).append( items );
     });
 */
-
-
-
 
 
       

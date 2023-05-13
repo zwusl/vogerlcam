@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: iso-8859-1 -*-
 
 
@@ -17,9 +17,9 @@ import json
 
 
 def header():
-    print "Content-Type: application/json;charset=iso-8859-1"
+    print ("Content-Type: application/json;charset=iso-8859-1")
 #   print "Content-Type: text/html;charset=iso-8859-1"
-    print ""
+    print ("")
 
 
 def nextimage(mymodus,mydir,mycurrent,myuhrzeit):
@@ -188,5 +188,5 @@ timestampStr = dateTimeObj.strftime("%Y-%m-%d--%H-%M-%S")
 
 json_string=json.dumps(myfound)
     
-print json_string
+print (json_string)
 
