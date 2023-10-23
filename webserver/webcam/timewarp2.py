@@ -37,8 +37,16 @@ def nextimage(mymodus,mydir,mycurrent,myuhrzeit):
             elif mymodus == "previous" and myindex > 0:
                 mynext = myfiles[myindex - 1]
             else:
+                if mymodus == "next":
+                    myaction = "ni"
+                else:
+                    myaction = "pi"
                 mynext = nextday(myaction,mycurrent,myuhrzeit)
         else:
+            if mymodus == "next":
+                myaction = "ni"
+            else:
+                myaction = "pi"
             mynext = nextday(myaction,mycurrent,myuhrzeit)
     else:
         mytarget = datetime.datetime.strptime(myuhrzeit,"%H-%M-%S")
