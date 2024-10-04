@@ -48,6 +48,7 @@ ch.setFormatter(formatter)
 # logger.addHandler(fh)
 logger.addHandler(ch)
 
+# write someting in logger 
 logger.info('starting')
 
 
