@@ -193,7 +193,7 @@ def retry_sending(session, config):
 def store_ftp(session, config, full_name, save_as):
     '''store in ftp'''
 
-    change_to_target_dir(session, config.get('dir'), config.get('subdir'))
+    change_to_target_dir(session, config.get('dir'), config.get('subdir'), save_as)
 
     file_handler = open(full_name, 'rb')
     session.storbinary('STOR ' + save_as + '.tmp', file_handler)
@@ -201,7 +201,7 @@ def store_ftp(session, config, full_name, save_as):
     session.rename(save_as + '.tmp', save_as)
 
 
-def change_to_target_dir(session, cwddir, subdir):
+def change_to_target_dir(session, cwddir, subdir, filename):
     '''change dir'''
     session.cwd(cwddir)
 
@@ -209,8 +209,11 @@ def change_to_target_dir(session, cwddir, subdir):
         split_subdir = subdir.split("-")
         for split_count in range(0, len(split_subdir)):
             sublevel = "-".join(split_subdir[0:split_count + 1])
-            formatted_sublevel = datetime.strftime(datetime.now(),
+            #formatted_sublevel = datetime.strftime(datetime.now(),
+            #                                       sublevel)
+            formatted_sublevel = datetime.strftime(datetime.strptime(filename[0:10],"%Y-%m-%d"),
                                                    sublevel)
+            
             create_missing_dir(session, formatted_sublevel)
             logger.debug("changing to dir: %s", formatted_sublevel)
             session.cwd(formatted_sublevel)
