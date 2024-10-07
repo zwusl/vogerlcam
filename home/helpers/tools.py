@@ -155,12 +155,15 @@ def send_image_to_webpage(config, image_file_annotated):
             if session_is_open:
                 session.quit()
         else:
+            # retry: look if there are any unttranfered files in the retrydir
+            # the session.quit() will be done in the sub
             logger.info("retry sending files")
             retry_sending(session, config)
 
 
 def retry_sending(session, config):
     '''retry'''
+    an_error_happened = False
     try:
         retrydir = config.get('retrydir')
 
@@ -183,10 +186,16 @@ def retry_sending(session, config):
                        join(retrydir, filename) + 'xxx')
 
             session.quit()
+
     except socket.timeout as sock_error:
+        an_error_happened = True
         logger.error("sock error %s ", sock_error)
     except ftplib.all_errors as ftp_error:
+        an_error_happened = True
         logger.error("ftp error %s ", ftp_error)
+
+    if an_error_happened:
+        session.quit()
 
 
 def store_ftp(session, config, full_name, save_as):
