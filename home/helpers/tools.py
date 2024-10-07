@@ -30,8 +30,8 @@ def is_there_anybody_out_there(config):
     last_visit_url = config.get('url')
     last_visit_format = config.get('format')
     try:
-        html = urllib.request.urlopen(last_visit_url, None, 10)
-        visited = html.read()
+        with urllib.request.urlopen(last_visit_url, None, 10) as html:
+            visited = html.read()
         visited_parsed = datetime.strptime(visited.decode('ascii'),
                                            last_visit_format)
     except ValueError as value_error:
@@ -103,7 +103,7 @@ def annotate_image(image_file, image_file_annotated,
         logger.info("do_resize")
         size = 1140, 1140
         try:
-            im_crop.thumbnail(size, Image.ANTIALIAS)
+            im_crop.thumbnail(size) #, Image.Resampling.LANCZOS)
         except IOError:
             logger.error("cannot resize image")
 
@@ -126,6 +126,7 @@ def send_image_to_webpage(config, image_file_annotated):
     filename = config.get('filename')
     if "%" in filename:
         filename = (datetime.strftime(datetime.now(), filename))
+
     try:
         session = ftplib.FTP(config.get('server'), config.get('user'),
                              config.get('password'), timeout=10)
@@ -156,8 +157,6 @@ def send_image_to_webpage(config, image_file_annotated):
         else:
             logger.info("retry sending files")
             retry_sending(session, config)
-
-    return session_is_open
 
 
 def retry_sending(session, config):
@@ -195,9 +194,8 @@ def store_ftp(session, config, full_name, save_as):
 
     change_to_target_dir(session, config.get('dir'), config.get('subdir'), save_as)
 
-    file_handler = open(full_name, 'rb')
-    session.storbinary('STOR ' + save_as + '.tmp', file_handler)
-    file_handler.close()
+    with open(full_name, 'rb') as file_handle:
+        session.storbinary('STOR ' + save_as + '.tmp', file_handle)
     session.rename(save_as + '.tmp', save_as)
 
 
@@ -213,7 +211,7 @@ def change_to_target_dir(session, cwddir, subdir, filename):
             #                                       sublevel)
             formatted_sublevel = datetime.strftime(datetime.strptime(filename[0:10],"%Y-%m-%d"),
                                                    sublevel)
-            
+
             create_missing_dir(session, formatted_sublevel)
             logger.debug("changing to dir: %s", formatted_sublevel)
             session.cwd(formatted_sublevel)
